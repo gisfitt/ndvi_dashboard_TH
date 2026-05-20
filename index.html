@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NDVI Recheck V8</title>
+<title>NDVI Recheck — Thailand</title>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -74,7 +74,6 @@
   }
   #header select:hover { background: rgba(255,255,255,0.22); }
   #header select option { color: #222; background: white; font-weight: 400; }
-  #countrySelect  { width: 110px; }
   #combineSelect  { width: 160px; }
   #estimateSelect { width: 150px; }
   #estDebug {
@@ -749,22 +748,14 @@
   <div class="h-brand">
     <!-- <span class="h-icon">🛰️</span> -->
     <div>
-      <div class="h-title">NDVI Recheck</div>
-      <div class="h-sub">Planting &amp; Harvest</div>
+      <div class="h-title">NDVI Recheck — Thailand</div>
+      <div class="h-sub">Planting &amp; Harvest Review</div>
     </div>
   </div>
 
   <div class="hdiv"></div>
 
-  <div class="hgroup">
-    <label>Country</label>
-    <select id="countrySelect" onchange="onCountryChange()">
-      <option value="Cambodia">Cambodia</option>
-      <option value="Thailand">Thailand</option>
-      <option value="Laos">Laos</option>
-    </select>
-  </div>
-
+  <!-- Thailand only — country fixed, no selector -->
   <div class="hgroup">
     <label>Raw NDVI</label>
     <select id="combineSelect" onchange="onCombineChange()">
@@ -994,7 +985,7 @@
 //  STATE
 // ═══════════════════════════════════════════════════════════════════
 const S = {
-  country:    'Cambodia',
+  country:    'Thailand',
   combineFile:  null,
   estimateFile: null,
   allRows:     [],      // raw records from combine CSV
@@ -1710,7 +1701,7 @@ function updateCountrySummary() {
     `<span class="cs-tag">${c.key}</span>`).join('');
 
   el.innerHTML = `
-    <div class="cs-country">🌍 ${S.country}</div>
+    <div class="cs-country">🇹🇭 ${S.country}</div>
     <div class="cs-stats">
       <div class="cs-stat">
         <span class="cs-num">${totalIds.toLocaleString()}</span>
@@ -2279,52 +2270,6 @@ async function exportResults() {
     downloadCsv(rows, fname);
     flashMsg('exportMsg', `✓ Downloaded ${fname}`);
   }
-}
-
-function downloadCsv(rows, filename) {
-  if (!rows.length) return;
-  const headers = Object.keys(rows[0]);
-  const lines   = [headers.join(',')];
-  rows.forEach(r => {
-    lines.push(headers.map(h => {
-      const v = String(r[h] ?? '');
-      return v.includes(',') ? `"${v}"` : v;
-    }).join(','));
-  });
-  const blob = new Blob([lines.join('\n')], {type:'text/csv'});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url; a.download = filename; a.click();
-  URL.revokeObjectURL(url);
-}
-
-// ═══════════════════════════════════════════════════════════════════
-//  DROPDOWN CHANGE HANDLERS
-// ═══════════════════════════════════════════════════════════════════
-async function onCountryChange() {
-  S.country = document.getElementById('countrySelect').value;
-  S.results = {};
-  renderSavedList();
-  showLoading('Switching country…');
-  await refreshFileDropdowns();
-  await reloadAll();
-  hideLoading();
-}
-
-async function onCombineChange() {
-  S.combineFile = document.getElementById('combineSelect').value || null;
-  await loadCombineData(S.combineFile);
-}
-
-async function onEstimateChange() {
-  S.estimateFile = document.getElementById('estimateSelect').value || null;
-  await loadEstimateData(S.estimateFile);
-  if (S.ids.length) renderCurrentId();
-}
-
-async function reloadAll() {
-  await loadEstimateData(S.estimateFile);
-  await loadCombineData(S.combineFile);
 }
 
 function downloadCsv(rows, filename) {
