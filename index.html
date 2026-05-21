@@ -684,6 +684,16 @@
   }
   #btnExport:hover { background: linear-gradient(135deg,#163e82,#1e50b0); transform: translateY(-1px); }
 
+  #btnReset {
+    padding: 8px 11px;
+    background: linear-gradient(135deg,#a01a1a,#c62525);
+    color: white; border: none; border-radius: 7px;
+    font-size: 12px; font-weight: 700; cursor: pointer;
+    transition: all 0.18s; box-shadow: 0 2px 5px rgba(160,26,26,0.28);
+    white-space: nowrap;
+  }
+  #btnReset:hover { background: linear-gradient(135deg,#821616,#b01e1e); transform: translateY(-1px); }
+
   /* Saved rows */
   .saved-row {
     display: flex; align-items: center; padding: 2px 6px;
@@ -964,7 +974,10 @@
           </div>
           <div id="savedList" style="flex:1;overflow-y:auto;border:1px solid #e8edf3;
                border-radius:6px;margin-bottom:7px;min-height:30px;max-height:70px;"></div>
-          <button id="btnExport" onclick="exportResults()">📥 Export CSV</button>
+          <div style="display:flex;gap:6px;margin-bottom:4px;">
+            <button id="btnExport" onclick="exportResults()" style="flex:1;">📥 Export CSV</button>
+            <button id="btnReset" onclick="resetResults()" title="Clear all saved results">🗑 Reset</button>
+          </div>
           <div id="exportMsg" style="font-size:11px;color:#1a4fa0;text-align:center;margin-top:3px;height:14px;"></div>
         </div>
 
@@ -2226,6 +2239,26 @@ function deleteResult(id) {
   renderSavedList();
 }
 
+function resetResults() {
+  if (!Object.keys(S.results).length) return;
+  if (!confirm('Reset all saved results? This cannot be undone.')) return;
+  S.results = {};
+  renderCycleList(S.ids[S.currentIdx]);
+  syncIdList();
+  renderSavedList();
+  updateChartLines();
+  flashMsg('exportMsg', '✓ All results cleared', '#cc7700');
+}
+
+/** Convert any date string → 'MM/DD/YY' for Excel export */
+function fmtExport(raw) {
+  if (!raw) return '';
+  const iso = toISO(parseDate(raw));
+  if (!iso) return '';
+  const [y, mo, d] = iso.split('-');
+  return `${mo.padStart(2,'0')}/${d.padStart(2,'0')}/${y.slice(-2)}`;
+}
+
 async function exportResults() {
   const ids = Object.keys(S.results);
   if (!ids.length) {
@@ -2241,9 +2274,9 @@ async function exportResults() {
         ID:         id,
         Cycle:      i + 1,
         Province:   r.province  || '',
-        P_Date_est: r.pest      ? toDisplay(r.pest)  : '',
-        Pdate_user: c.pdate     ? toDisplay(c.pdate) : '',
-        Hdate_user: c.hdate     ? toDisplay(c.hdate) : '',
+        P_Date_est: fmtExport(r.pest),
+        Pdate_user: fmtExport(c.pdate),
+        Hdate_user: fmtExport(c.hdate),
         Remark:     c.remark    || '',
       });
     });
