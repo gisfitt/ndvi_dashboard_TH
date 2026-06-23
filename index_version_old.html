@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NDVI Recheck — Thailand revise plot</title>
+<title>NDVI Recheck — Thailand</title>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -74,7 +74,6 @@
   }
   #header select:hover { background: rgba(255,255,255,0.22); }
   #header select option { color: #222; background: white; font-weight: 400; }
-  #countrySelect  { width: 110px; }
   #combineSelect  { width: 160px; }
   #estimateSelect { width: 150px; }
   #estDebug {
@@ -341,7 +340,7 @@
     margin-bottom: 5px;
   }
   #savedList {
-    max-height: 100px;
+    max-height: 130px;
     overflow-y: auto;
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -419,12 +418,14 @@
   .legend-box { width: 14px; height: 12px; display: inline-block; border-radius: 2px; background: rgba(100,149,237,0.2); border: 1px solid rgba(100,149,237,0.5); }
 
   #chart {
-    /* clamp(min, preferred, max):
-       - never smaller than 300px (small laptops)
-       - 48% of viewport height on typical screens
-       - never taller than 680px (large/4K monitors)
-       Ensures consistent proportional height on every machine. */
-    height:     clamp(300px, 48vh, 680px);
+    /* Chart display height:
+       45vh  = 45% of the browser window height (~450px on a 1080p screen).
+       Increase to 60vh for a taller chart, decrease to 35vh for a shorter one.
+       min-height prevents collapsing on very small screens.
+       max-height caps it on large monitors. */
+    height:     50vh;
+    min-height: 280px;
+    max-height: 560px;
     width: 100%;
   }
   /* Plotly's inner div must also fill full width */
@@ -583,12 +584,16 @@
     margin-bottom: 7px;
   }
 
-  /* Set-date buttons row — same gap as cycle row */
+  /* Set-date buttons row — stretch to fill full card width */
   #setDateRow {
     display: flex;
     flex-direction: row;
-    align-items: stretch;
-    gap: 8px;
+    align-items: center;
+    gap: 16px;
+  }
+  #setDateRow .set-btn {
+    flex: 1;        /* grow equally to fill available space */
+    min-width: 0;
   }
   #modeActiveMsg {
     flex-shrink: 0;
@@ -598,36 +603,31 @@
     white-space: nowrap;
   }
 
-  /* Set-date buttons — column layout, mirrors .cyc-btn style */
+  /* Set-date buttons */
   .set-btn {
-    flex: 1;
-    position: relative;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-    padding: 8px 6px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
     border: 2px solid #dde3ec; border-radius: 9px;
     background: #f8f9fb; cursor: pointer;
     transition: all 0.18s; text-align: center;
   }
   .set-btn:hover { background: #eef0f5; border-color: #bcc3cf; }
-  .set-btn-icon { font-size: 20px; line-height: 1; }
-  .set-btn-text { display: flex; flex-direction: column; gap: 2px; align-items: center; }
-  .set-btn-main { font-size: 11px; font-weight: 800; color: #444; }
-  .set-btn-hint { font-size: 10px; color: #aaa; font-weight: 400; }
-  /* Status dot — small indicator at top-right corner */
+  .set-btn-icon { font-size: 24px; flex-shrink: 0; line-height: 1; width: 32px; text-align: center; display: inline-block; }
+  .set-btn-text { flex: 1; display: flex; flex-direction: column; gap: 2px; align-items: center; }
+  .set-btn-main { font-size: 14px; font-weight: 700; color: #333; }
+  .set-btn-hint { font-size: 11px; color: #999; }
   .set-btn-badge {
-    position: absolute; top: 6px; right: 8px;
-    width: 8px; height: 8px;
+    font-size: 10px; width: 10px; height: 10px;
     border-radius: 50%; background: #ddd; flex-shrink: 0;
-    font-size: 0; /* hide the ● character */
   }
   .set-btn-p.active-p {
     background: linear-gradient(135deg,#edfaed,#d4f5d4);
     border-color: #228B22;
     box-shadow: 0 0 0 3px rgba(34,139,34,0.15);
   }
-  .set-btn-p.active-p .set-btn-main { color: #155724; font-weight: 800; }
+  .set-btn-p.active-p .set-btn-main { color: #155724; }
   .set-btn-p.active-p .set-btn-hint { color: #228B22; font-weight: 600; }
-  .set-btn-p.active-p .set-btn-badge { background: #228B22; animation: pulse 1.2s infinite; top: 6px; right: 8px; }
+  .set-btn-p.active-p .set-btn-badge { background: #228B22; animation: pulse 1.2s infinite; }
   .set-btn-h.active-h {
     background: linear-gradient(135deg,#fdf3ed,#f5e6db);
     border-color: #8B4513;
@@ -640,68 +640,6 @@
     0%,100% { opacity:1; transform:scale(1); }
     50%      { opacity:0.5; transform:scale(1.4); }
   }
-
-  /* ── Cycle selector ── */
-  #cpRow0 { width: 100%; }
-  #cpRow0 .ctrl-card {
-    width: 100%; box-sizing: border-box;
-    background: transparent; border: none; box-shadow: none; padding: 4px 0 6px;
-  }
-  #cycleSelectRow { display: flex; gap: 10px; }
-
-  .cyc-btn {
-    flex: 1;
-    display: flex; flex-direction: column; align-items: center; gap: 6px;
-    padding: 12px 10px 10px;
-    border: 1.5px solid #e2e8f0; border-radius: 12px;
-    background: #fff; cursor: pointer;
-    transition: all 0.18s cubic-bezier(.4,0,.2,1);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    position: relative; overflow: hidden;
-  }
-  .cyc-btn::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    border-radius: 12px 12px 0 0;
-    background: #e2e8f0;
-    transition: background 0.18s;
-  }
-  .cyc-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.10);
-    border-color: #cbd5e1;
-  }
-
-  /* Cycle number badge */
-  .cyc-num {
-    width: 32px; height: 32px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 15px; font-weight: 800; color: #fff;
-    flex-shrink: 0; line-height: 1;
-    transition: transform 0.18s;
-  }
-  .cyc-btn:hover .cyc-num { transform: scale(1.08); }
-  #cyc-btn-1 .cyc-num { background: linear-gradient(135deg,#3b82f6,#2563eb); box-shadow: 0 2px 8px rgba(37,99,235,0.30); }
-  #cyc-btn-2 .cyc-num { background: linear-gradient(135deg,#10b981,#059669); box-shadow: 0 2px 8px rgba(5,150,105,0.30); }
-  #cyc-btn-3 .cyc-num { background: linear-gradient(135deg,#a855f7,#7c3aed); box-shadow: 0 2px 8px rgba(124,58,237,0.30); }
-
-  .cyc-btn .cyc-label { font-size: 12px; font-weight: 700; color: #374151; letter-spacing: 0.2px; }
-  .cyc-btn .cyc-hint  { font-size: 10px; color: #9ca3af; font-weight: 500; }
-
-  /* Active states per cycle */
-  #cyc-btn-1.active { border-color: #3b82f6; background: linear-gradient(160deg,#eff6ff,#dbeafe); box-shadow: 0 4px 14px rgba(59,130,246,0.18); }
-  #cyc-btn-1.active::before { background: linear-gradient(90deg,#3b82f6,#2563eb); }
-  #cyc-btn-1.active .cyc-label { color: #1d4ed8; }
-  #cyc-btn-1.active .cyc-hint  { color: #3b82f6; font-weight: 600; }
-
-  #cyc-btn-2.active { border-color: #10b981; background: linear-gradient(160deg,#ecfdf5,#d1fae5); box-shadow: 0 4px 14px rgba(16,185,129,0.18); }
-  #cyc-btn-2.active::before { background: linear-gradient(90deg,#10b981,#059669); }
-  #cyc-btn-2.active .cyc-label { color: #047857; }
-  #cyc-btn-2.active .cyc-hint  { color: #10b981; font-weight: 600; }
-
-  #cyc-btn-3.active { border-color: #a855f7; background: linear-gradient(160deg,#faf5ff,#ede9fe); box-shadow: 0 4px 14px rgba(168,85,247,0.18); }
-  #cyc-btn-3.active::before { background: linear-gradient(90deg,#a855f7,#7c3aed); }
-  #cyc-btn-3.active .cyc-label { color: #6d28d9; }
-  #cyc-btn-3.active .cyc-hint  { color: #a855f7; font-weight: 600; }
 
   /* Date rows */
   .cp-row { display: flex; align-items: center; gap: 6px; }
@@ -773,10 +711,6 @@
   #cycleList {
     margin-top: 8px;
     display: flex; flex-direction: column; gap: 4px;
-    max-height: 58px;   /* ~2 rows */
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-right: 2px;
   }
   .cycle-row {
     display: flex; align-items: center; gap: 5px;
@@ -789,6 +723,13 @@
   .cycle-row .cy-del  { margin-left: auto; cursor: pointer; color: #cc0000;
                         font-weight: 700; font-size: 13px; line-height: 1; }
   .cycle-row .cy-del:hover { color: #ff0000; }
+  #btnAddCycle {
+    width: 100%; margin-top: 7px; padding: 5px;
+    background: #e8f4e8; border: 1px dashed #228B22;
+    border-radius: 6px; color: #1a6e1a; font-size: 12px;
+    font-weight: 700; cursor: pointer; transition: background 0.15s;
+  }
+  #btnAddCycle:hover { background: #d0ebd0; }
 
   /* keyboard hint */
   .kbd-hint { font-size: 10px; color: #aaa; text-align: center; padding: 4px 0 0; }
@@ -818,17 +759,13 @@
     <!-- <span class="h-icon">🛰️</span> -->
     <div>
       <div class="h-title">NDVI Recheck — Thailand</div>
-      <div class="h-sub">Planting &amp; Harvest (v.19 TH)</div>
+      <div class="h-sub">Planting &amp; Harvest Review</div>
     </div>
   </div>
 
   <div class="hdiv"></div>
 
-  <!-- Country fixed to Thailand — no selector shown -->
-  <select id="countrySelect" style="display:none;">
-    <option value="Thailand" selected>Thailand</option>
-  </select>
-
+  <!-- Thailand only — country fixed, no selector -->
   <div class="hgroup">
     <label>Raw NDVI</label>
     <select id="combineSelect" onchange="onCombineChange()">
@@ -865,9 +802,9 @@
     <div id="sbNavSection">
       <div class="sb-title">Plot ID</div>
       <div class="nav-row">
-        <button type="button" onclick="prevId()" title="Previous (←)">&#9664;</button>
+        <button onclick="prevId()" title="Previous (←)">&#9664;</button>
         <span id="idCounter">0 / 0</span>
-        <button type="button" onclick="nextId()" title="Next (→)">&#9654;</button>
+        <button onclick="nextId()" title="Next (→)">&#9654;</button>
       </div>
       <select id="provFilter" onchange="applyProvFilter()">
         <option value="">🗂 All Provinces</option>
@@ -923,13 +860,13 @@
       <input type="date" id="xStartDate" onchange="applyDateRange()">
       <label>To</label>
       <input type="date" id="xEndDate" onchange="applyDateRange()">
-      <button type="button" class="drb-btn" onclick="setQuickRange(90)"  id="drb90">3M</button>
-      <button type="button" class="drb-btn" onclick="setQuickRange(180)" id="drb180">6M</button>
-      <button type="button" class="drb-btn" onclick="setQuickRange(365)" id="drb365">1Y</button>
-      <button type="button" class="drb-btn" onclick="setQuickRange(548)" id="drb548">1.5Y</button>
-      <button type="button" class="drb-btn" onclick="setQuickRange(730)" id="drb730">2Y</button>
-      <button type="button" class="drb-btn" onclick="setFullRange()"     id="drbAll">All</button>
-      <button type="button" class="drb-btn" style="border-color:#8B4513;color:#8B4513;" onclick="resetDateRange()">↺ Reset</button>
+      <button class="drb-btn" onclick="setQuickRange(90)"  id="drb90">3M</button>
+      <button class="drb-btn" onclick="setQuickRange(180)" id="drb180">6M</button>
+      <button class="drb-btn" onclick="setQuickRange(365)" id="drb365">1Y</button>
+      <button class="drb-btn" onclick="setQuickRange(548)" id="drb365">1.5Y</button>
+      <button class="drb-btn" onclick="setQuickRange(730)" id="drb730">2Y</button>
+      <button class="drb-btn" onclick="setFullRange()"     id="drbAll">All</button>
+      <button class="drb-btn" style="border-color:#8B4513;color:#8B4513;" onclick="resetDateRange()">↺ Reset</button>
     </div>
 
     <!-- Info bar: Province / District / X / Y above chart -->
@@ -957,52 +894,28 @@
     <!-- ═══════════ CONTROL PANEL (below chart) ═══════════ -->
     <div id="controlPanel">
 
-      <!-- ROW 0: Select Cycle ─────────────────────────────────── -->
-      <div id="cpRow0">
-        <div class="ctrl-card">
-          <div class="ctrl-card-title" style="text-align:center; margin-bottom:8px;">SELECT CYCLE <span style="font-weight:400;color:#bbb;text-transform:none;letter-spacing:0;font-size:9px;">— click to select, click again to clear</span></div>
-          <div id="cycleSelectRow">
-            <button type="button" class="cyc-btn" id="cyc-btn-1" onclick="selectCycle(1)">
-              <span class="cyc-num">1</span>
-              <span class="cyc-label">Cycle 1</span>
-              <span class="cyc-hint" id="cyc-hint-1">not set</span>
-            </button>
-            <button type="button" class="cyc-btn" id="cyc-btn-2" onclick="selectCycle(2)">
-              <span class="cyc-num">2</span>
-              <span class="cyc-label">Cycle 2</span>
-              <span class="cyc-hint" id="cyc-hint-2">not set</span>
-            </button>
-            <button type="button" class="cyc-btn" id="cyc-btn-3" onclick="selectCycle(3)">
-              <span class="cyc-num">3</span>
-              <span class="cyc-label">Cycle 3</span>
-              <span class="cyc-hint" id="cyc-hint-3">not set</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
       <!-- ROW 1: Set Date on Chart — full width ──────────────── -->
       <div id="cpRow1">
         <div class="ctrl-card" id="cardMode">
           <div class="ctrl-card-title" style="text-align:center;">🎯 Set Date on Chart</div>
           <div id="setDateRow">
 
-            <button type="button" class="set-btn set-btn-p" id="btnModeP" onclick="toggleMode('p')">
+            <button class="set-btn set-btn-p" id="btnModeP" onclick="toggleMode('p')">
               <span class="set-btn-icon">🌱</span>
               <span class="set-btn-text">
                 <span class="set-btn-main">Planting</span>
                 <span class="set-btn-hint" id="hintP">Click to activate</span>
               </span>
-              <span class="set-btn-badge" id="badgeP"></span>
+              <span class="set-btn-badge" id="badgeP">●</span>
             </button>
 
-            <button type="button" class="set-btn set-btn-h" id="btnModeH" onclick="toggleMode('h')">
+            <button class="set-btn set-btn-h" id="btnModeH" onclick="toggleMode('h')">
               <span class="set-btn-icon">🌾</span>
               <span class="set-btn-text">
                 <span class="set-btn-main">Harvest</span>
                 <span class="set-btn-hint" id="hintH">Click to activate</span>
               </span>
-              <span class="set-btn-badge" id="badgeH"></span>
+              <span class="set-btn-badge" id="badgeH">●</span>
             </button>
 
             <div id="modeActiveMsg" style="display:none;">
@@ -1034,6 +947,7 @@
             <span class="cp-lbl">Harvest</span>
             <input type="date" id="hdateInput" class="cp-date-input" onchange="onHDateChange()">
           </div>
+          <button id="btnAddCycle" onclick="addCycle()">➕ Add Cycle</button>
           <div id="cycleList"></div>
         </div>
 
@@ -1043,7 +957,7 @@
           <input type="text" id="remarkInput" placeholder="Remark (optional)…"
                  style="width:100%;padding:5px 8px;border:1px solid #dde3ec;border-radius:6px;
                         font-size:12px;margin-bottom:8px;box-sizing:border-box;background:#fafbfc;">
-          <button type="button" id="btnSave" onclick="saveCurrentId()">💾 Save this ID</button>
+          <button id="btnSave" onclick="saveCurrentId()">💾 Save this ID</button>
           <div id="saveMsg" style="font-size:11px;color:#1a7a1a;text-align:center;margin-top:4px;height:14px;"></div>
           <div class="kbd-hint" style="margin-top:6px;">
             <kbd>←</kbd><kbd>→</kbd> nav &nbsp;|&nbsp;
@@ -1061,8 +975,8 @@
           <div id="savedList" style="flex:1;overflow-y:auto;border:1px solid #e8edf3;
                border-radius:6px;margin-bottom:7px;min-height:30px;max-height:70px;"></div>
           <div style="display:flex;gap:6px;margin-bottom:4px;">
-            <button type="button" id="btnExport" onclick="exportResults()" style="flex:1;">📥 Export CSV</button>
-            <button type="button" id="btnReset" onclick="resetResults()" title="Clear all saved results">🗑 Reset</button>
+            <button id="btnExport" onclick="exportResults()" style="flex:1;">📥 Export CSV</button>
+            <button id="btnReset" onclick="resetResults()" title="Clear all saved results">🗑 Reset</button>
           </div>
           <div id="exportMsg" style="font-size:11px;color:#1a4fa0;text-align:center;margin-top:3px;height:14px;"></div>
         </div>
@@ -1095,7 +1009,6 @@ const S = {
   currentIdx:  0,
   results:     {},      // { id: { cycles:[{pdate,hdate,remark}], province, pest } }
   setMode:     null,    // 'p' | 'h' | null
-  currentCycle: null,   // selected cycle slot: 1 | 2 | 3 | null
   _estMeta:    { filename:null, idCol:null, pdCol:null, allCols:[], ids:[] },
   _idMap:      {},   // combineId → estimateId
 };
@@ -1154,12 +1067,8 @@ function flashMsg(elId, msg, color='#1a7a1a') {
 // ═══════════════════════════════════════════════════════════════════
 //  API CALLS
 // ═══════════════════════════════════════════════════════════════════
-
-// Cache-bust token: changes every page load so browsers always fetch fresh JSON
-const _CB = `?v=${Date.now()}`;
-
 async function apiFetch(url) {
-  const r = await fetch(url + _CB, { cache: 'no-store' });
+  const r = await fetch(url);
   if (!r.ok) throw new Error(`HTTP ${r.status}: ${url}`);
   return r.json();
 }
@@ -1172,8 +1081,7 @@ async function loadCountryFiles(country) {
 async function loadCsv(country, folder, filename) {
   // Load directly from {country}/{filename} (raw_ndvi.json or est_ndvi.json)
   const path = `${country.toLowerCase()}/${filename}`;
-  // cache: 'no-store' + timestamp query → always fetches latest file from server
-  const r = await fetch(path + _CB, { cache: 'no-store' });
+  const r = await fetch(path);
   if (!r.ok) throw new Error(`HTTP ${r.status}: ${path}`);
   const data = await r.json();
   // Support plain array format (new) and {records, rows} object format (old)
@@ -1308,12 +1216,10 @@ function buildCycleOverlays(id) {
         x0:pISO, x1:pISO, y0:0, y1:1,
         line:{ color, width:1.5, dash:'solid' },
       });
-      // Label: top of chart, centered on the line
-      const yOffsetP = 0.98 - (idx % 4) * 0.08;
+      const yOffset = 0.78 - (idx % 4) * 0.06;
       out.annotations.push({
-        x:pISO, y:yOffsetP, xref:'x', yref:'paper',
-        // edit position text
-        text:`<b>P</b> ${labelTag}`, showarrow:false, xanchor:'center',
+        x:pISO, y:yOffset, xref:'x', yref:'paper',
+        text:`<b>P</b> ${labelTag}`, showarrow:false, xanchor:'left',
         font:{ color:'white', size:9 },
         bgcolor: color, bordercolor: color, borderwidth:1, borderpad:2,
         opacity: 0.92,
@@ -1329,14 +1235,13 @@ function buildCycleOverlays(id) {
         x0:hISO, x1:hISO, y0:0, y1:1,
         line:{ color, width:1.5, dash:'dash' },
       });
-      // Label: top of chart, centered on the line (same row as P label for same cycle)
-      const yOffsetH = 0.98 - (idx % 4) * 0.08;
+      const yOffset = 0.72 - (idx % 4) * 0.06;
       out.annotations.push({
-        x:hISO, y:yOffsetH, xref:'x', yref:'paper',
-        text:`<b>H</b> ${labelTag}`, showarrow:false, xanchor:'center',
+        x:hISO, y:yOffset, xref:'x', yref:'paper',
+        text:`<b>H</b> ${labelTag}`, showarrow:false, xanchor:'left',
         font:{ color:'white', size:9 },
         bgcolor: color, bordercolor: color, borderwidth:1, borderpad:2,
-        opacity: 0.92,
+        opacity: 0.78,
         hovertext: `Harvest date · ${cyc.key}` + (cyc.crop ? `<br>Crop: ${cyc.crop}` : '')
                   + `<br>${cyc.hdate}`,
       });
@@ -1809,7 +1714,7 @@ function updateCountrySummary() {
     `<span class="cs-tag">${c.key}</span>`).join('');
 
   el.innerHTML = `
-    <div class="cs-country">🌍 ${S.country}</div>
+    <div class="cs-country">🇹🇭 ${S.country}</div>
     <div class="cs-stats">
       <div class="cs-stat">
         <span class="cs-num">${totalIds.toLocaleString()}</span>
@@ -1872,8 +1777,6 @@ function renderCurrentId() {
   document.getElementById('pdateInput').value  = '';
   document.getElementById('hdateInput').value  = '';
   document.getElementById('remarkInput').value = '';
-  clearCycleSelection();
-  updateCycleHints(id);
   renderCycleList(id);
 
   // Update chart info bar — Province / District / X / Y from estimate
@@ -2024,7 +1927,7 @@ function renderCurrentId() {
       automargin: true,
     },
     yaxis: {
-      range: [-0.2, 1.0],
+      range: [-0.4, 1.0],
       dtick: 0.1,
       gridcolor: '#e8e8e8',
       zeroline: true,
@@ -2247,57 +2150,12 @@ function clearMode() {
 //  SAVE / EXPORT
 // ═══════════════════════════════════════════════════════════════════
 // ── Add current P/H inputs as a new cycle for this ID ───────────────
-// ── Cycle selector helpers ───────────────────────────────────────────
-/**
- * Cycle selector — just a LABEL tag, NOT a fixed slot.
- * Multiple entries with the same cycleNum are allowed (e.g. C1 in 2025 AND C1 in 2026).
- * Click same button again to deselect (tag becomes empty).
- */
-function selectCycle(n) {
-  S.currentCycle = (S.currentCycle === n) ? null : n;
-  updateCycleButtons();
-}
-
-/** Refresh active/inactive state on all cycle buttons */
-function updateCycleButtons() {
-  for (let n = 1; n <= 3; n++) {
-    const btn = document.getElementById(`cyc-btn-${n}`);
-    if (!btn) continue;
-    btn.classList.toggle('active', S.currentCycle === n);
-  }
-}
-
-/** Update hint under each cycle button: show how many entries saved for that cycleNum */
-function updateCycleHints(id) {
-  for (let n = 1; n <= 3; n++) {
-    const el = document.getElementById(`cyc-hint-${n}`);
-    if (!el) continue;
-    const entries = (S.results[id]?.cycles || []).filter(c => c.cycleNum === n);
-    if (entries.length) {
-      el.textContent = `${entries.length} saved`;
-      el.style.color = '#228B22';
-    } else {
-      el.textContent = 'not set';
-      el.style.color = '#bbb';
-    }
-  }
-}
-
-/** Clear cycle selection and reset buttons */
-function clearCycleSelection() {
-  S.currentCycle = null;
-  updateCycleButtons();
-}
-
 function addCycle() {
   if (!S.ids.length) return;
   const id  = S.ids[S.currentIdx];
   const pd  = document.getElementById('pdateInput').value  || null;
   const hd  = document.getElementById('hdateInput').value  || null;
   const rem = document.getElementById('remarkInput').value || '';
-  // cycleNum = selected cycle label (1/2/3), or null if none selected
-  const cycleNum = S.currentCycle || null;
-
   if (!pd && !hd) { flashMsg('saveMsg', '⚠ Set at least one date', '#cc7700'); return; }
 
   const est = getEstimate(id) || {};
@@ -2308,30 +2166,18 @@ function addCycle() {
       pest:     est.P_Date_est ? toISO(parseDate(est.P_Date_est)) : null,
     };
   }
+  S.results[id].cycles.push({ pdate: pd, hdate: hd, remark: rem });
 
-  // Always APPEND — cycle button is a label only, never overwrites existing entries
-  S.results[id].cycles.push({ pdate: pd, hdate: hd, remark: rem, cycleNum });
-  const label = cycleNum ? `Cycle ${cycleNum}` : `Entry ${S.results[id].cycles.length}`;
-  flashMsg('saveMsg', `✓ ${label} added`);
-
-  // Clear inputs
+  // Clear inputs for next cycle
   document.getElementById('pdateInput').value  = '';
   document.getElementById('hdateInput').value  = '';
   document.getElementById('remarkInput').value = '';
-  clearCycleSelection();
 
-  // Lock scroll position — prevent browser from jumping when new row is added to DOM
-  const ca = document.getElementById('chartArea');
-  const savedScroll = ca ? ca.scrollTop : 0;
-
-  updateCycleHints(id);
+  flashMsg('saveMsg', `✓ Cycle ${S.results[id].cycles.length} added`);
   renderCycleList(id);
   syncIdList();
   renderSavedList();
   updateChartLines();
-
-  // Restore scroll after DOM update
-  if (ca) ca.scrollTop = savedScroll;
 }
 
 // ── Save current inputs as single cycle (keyboard S shortcut) ────────
@@ -2347,7 +2193,7 @@ function renderCycleList(id) {
   if (!res || !res.cycles || !res.cycles.length) { el.innerHTML = ''; return; }
   el.innerHTML = res.cycles.map((c, i) => `
     <div class="cycle-row">
-      <span class="cy-num">${c.cycleNum ? `C${c.cycleNum}` : `#${i+1}`}</span>
+      <span class="cy-num">C${i + 1}</span>
       <span class="cy-p">🌱 ${c.pdate ? toDisplay(c.pdate) : '—'}</span>
       <span class="cy-h">🌾 ${c.hdate ? toDisplay(c.hdate) : '—'}</span>
       ${c.remark ? `<span style="color:#888;font-size:10px;">${c.remark}</span>` : ''}
@@ -2404,11 +2250,13 @@ function resetResults() {
   flashMsg('exportMsg', '✓ All results cleared', '#cc7700');
 }
 
-/** Convert any date string → ISO 'YYYY-MM-DD' for Excel export (locale-safe) */
+/** Convert any date string → 'MM/DD/YY' for Excel export */
 function fmtExport(raw) {
   if (!raw) return '';
   const iso = toISO(parseDate(raw));
-  return iso || '';
+  if (!iso) return '';
+  const [y, mo, d] = iso.split('-');
+  return `${mo.padStart(2,'0')}/${d.padStart(2,'0')}/${y.slice(-2)}`;
 }
 
 async function exportResults() {
@@ -2424,8 +2272,7 @@ async function exportResults() {
     cycs.forEach((c, i) => {
       rows.push({
         ID:         id,
-        // Cycle:      i + 1,
-        Crop_cycle:   c.cycleNum != null ? `C${c.cycleNum}` : '',
+        Cycle:      i + 1,
         Province:   r.province  || '',
         P_Date_est: fmtExport(r.pest),
         Pdate_user: fmtExport(c.pdate),
@@ -2615,32 +2462,18 @@ function resetDateRange() {
 
 /** Highlight the active quick-range button */
 function highlightActiveQuickBtn(active) {
-  ['90','180','365','548','730','All'].forEach(k => {
+  ['90','180','365','730','All'].forEach(k => {
     const el = document.getElementById('drb' + k);
     if (el) el.classList.remove('active');
   });
   if (active === 90)    document.getElementById('drb90')?.classList.add('active');
   if (active === 180)   document.getElementById('drb180')?.classList.add('active');
   if (active === 365)   document.getElementById('drb365')?.classList.add('active');
-  if (active === 548)   document.getElementById('drb548')?.classList.add('active');
   if (active === 730)   document.getElementById('drb730')?.classList.add('active');
   if (active === 'all') document.getElementById('drbAll')?.classList.add('active');
 }
 
-/** Jump to a specific ID (used by saved-list click) */
-function jumpToId(id) {
-  const idx = S.ids.indexOf(id);
-  if (idx >= 0) { S.currentIdx = idx; renderCurrentId(); }
-}
-
 window.addEventListener('load', init);
-
-// Resize Plotly chart whenever the browser window is resized
-// (Plotly responsive:true handles this, but explicit call ensures correct redraw)
-window.addEventListener('resize', () => {
-  if (document.getElementById('chart')?.children.length) {
-    Plotly.Plots.resize('chart');
-  }
-});
 </script>
 </body>
+</html>
