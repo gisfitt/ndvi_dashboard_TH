@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NDVI Recheck — Thailand </title>
+<title>NDVI Recheck</title>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -598,56 +598,42 @@
     white-space: nowrap;
   }
 
-  /* Set-date buttons — row layout matching .cyc-btn for height symmetry */
+  /* Set-date buttons — column layout, mirrors .cyc-btn style */
   .set-btn {
     flex: 1;
     position: relative;
-    display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 10px;
-    padding: 6px 14px;
-    border: 1.5px solid #e2e8f0; border-radius: 10px;
-    background: #fff; cursor: pointer;
-    transition: all 0.18s cubic-bezier(.4,0,.2,1);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    overflow: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    padding: 8px 6px;
+    border: 2px solid #dde3ec; border-radius: 9px;
+    background: #f8f9fb; cursor: pointer;
+    transition: all 0.18s; text-align: center;
   }
-  .set-btn::before {
-    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-    border-radius: 10px 0 0 10px;
-    background: #e2e8f0; transition: background 0.18s;
-  }
-  .set-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.10); border-color: #cbd5e1; }
-  /* Planting: green left bar */
-  .set-btn-p::before { background: #d1fae5; }
-  .set-btn-h::before { background: #fde8d8; }
-
-  .set-btn-icon { font-size: 22px; line-height: 1; flex-shrink: 0; }
-  .set-btn-text { display: flex; flex-direction: column; gap: 1px; }
-  .set-btn-main { font-size: 11px; font-weight: 800; color: #374151; }
-  .set-btn-hint { font-size: 10px; color: #9ca3af; font-weight: 400; }
-  /* Status dot */
+  .set-btn:hover { background: #eef0f5; border-color: #bcc3cf; }
+  .set-btn-icon { font-size: 20px; line-height: 1; }
+  .set-btn-text { display: flex; flex-direction: column; gap: 2px; align-items: center; }
+  .set-btn-main { font-size: 11px; font-weight: 800; color: #444; }
+  .set-btn-hint { font-size: 10px; color: #aaa; font-weight: 400; }
+  /* Status dot — small indicator at top-right corner */
   .set-btn-badge {
-    position: absolute; top: 7px; right: 9px;
-    width: 7px; height: 7px;
-    border-radius: 50%; background: #ddd; font-size: 0;
+    position: absolute; top: 6px; right: 8px;
+    width: 8px; height: 8px;
+    border-radius: 50%; background: #ddd; flex-shrink: 0;
+    font-size: 0; /* hide the ● character */
   }
-  /* Active — Planting */
   .set-btn-p.active-p {
+    background: linear-gradient(135deg,#edfaed,#d4f5d4);
     border-color: #228B22;
-    background: linear-gradient(90deg,#edfaed,#fff);
-    box-shadow: 0 2px 10px rgba(34,139,34,0.15);
+    box-shadow: 0 0 0 3px rgba(34,139,34,0.15);
   }
-  .set-btn-p.active-p::before { background: linear-gradient(180deg,#34d058,#228B22); }
   .set-btn-p.active-p .set-btn-main { color: #155724; font-weight: 800; }
   .set-btn-p.active-p .set-btn-hint { color: #228B22; font-weight: 600; }
-  .set-btn-p.active-p .set-btn-badge { background: #228B22; animation: pulse 1.2s infinite; }
-  /* Active — Harvest */
+  .set-btn-p.active-p .set-btn-badge { background: #228B22; animation: pulse 1.2s infinite; top: 6px; right: 8px; }
   .set-btn-h.active-h {
+    background: linear-gradient(135deg,#fdf3ed,#f5e6db);
     border-color: #8B4513;
-    background: linear-gradient(90deg,#fdf3ed,#fff);
-    box-shadow: 0 2px 10px rgba(139,69,19,0.15);
+    box-shadow: 0 0 0 3px rgba(139,69,19,0.15);
   }
-  .set-btn-h.active-h::before { background: linear-gradient(180deg,#d4845a,#8B4513); }
-  .set-btn-h.active-h .set-btn-main { color: #6d3010; font-weight: 800; }
+  .set-btn-h.active-h .set-btn-main { color: #6d3010; }
   .set-btn-h.active-h .set-btn-hint { color: #8B4513; font-weight: 600; }
   .set-btn-h.active-h .set-btn-badge { background: #8B4513; animation: pulse 1.2s infinite; }
   @keyframes pulse {
@@ -659,63 +645,61 @@
   #cpRow0 { width: 100%; }
   #cpRow0 .ctrl-card {
     width: 100%; box-sizing: border-box;
-    background: transparent; border: none; box-shadow: none; padding: 2px 0 4px;
+    background: transparent; border: none; box-shadow: none; padding: 4px 0 6px;
   }
-  #cycleSelectRow { display: flex; gap: 8px; }
+  #cycleSelectRow { display: flex; gap: 10px; }
 
   .cyc-btn {
     flex: 1;
-    display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px;
-    padding: 6px 12px;
-    border: 1.5px solid #e2e8f0; border-radius: 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 12px 10px 10px;
+    border: 1.5px solid #e2e8f0; border-radius: 12px;
     background: #fff; cursor: pointer;
     transition: all 0.18s cubic-bezier(.4,0,.2,1);
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     position: relative; overflow: hidden;
   }
   .cyc-btn::before {
-    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-    border-radius: 10px 0 0 10px;
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    border-radius: 12px 12px 0 0;
     background: #e2e8f0;
     transition: background 0.18s;
   }
   .cyc-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.10);
     border-color: #cbd5e1;
   }
 
-  /* Cycle number badge — smaller */
+  /* Cycle number badge */
   .cyc-num {
-    width: 26px; height: 26px; border-radius: 50%;
+    width: 32px; height: 32px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 800; color: #fff;
+    font-size: 15px; font-weight: 800; color: #fff;
     flex-shrink: 0; line-height: 1;
     transition: transform 0.18s;
   }
   .cyc-btn:hover .cyc-num { transform: scale(1.08); }
-  #cyc-btn-1 .cyc-num { background: linear-gradient(135deg,#3b82f6,#2563eb); box-shadow: 0 2px 6px rgba(37,99,235,0.30); }
-  #cyc-btn-2 .cyc-num { background: linear-gradient(135deg,#10b981,#059669); box-shadow: 0 2px 6px rgba(5,150,105,0.30); }
-  #cyc-btn-3 .cyc-num { background: linear-gradient(135deg,#a855f7,#7c3aed); box-shadow: 0 2px 6px rgba(124,58,237,0.30); }
+  #cyc-btn-1 .cyc-num { background: linear-gradient(135deg,#3b82f6,#2563eb); box-shadow: 0 2px 8px rgba(37,99,235,0.30); }
+  #cyc-btn-2 .cyc-num { background: linear-gradient(135deg,#10b981,#059669); box-shadow: 0 2px 8px rgba(5,150,105,0.30); }
+  #cyc-btn-3 .cyc-num { background: linear-gradient(135deg,#a855f7,#7c3aed); box-shadow: 0 2px 8px rgba(124,58,237,0.30); }
 
-  /* Text group inside cycle button */
-  .cyc-btn-text { display: flex; flex-direction: column; gap: 1px; }
-  .cyc-btn .cyc-label { font-size: 11px; font-weight: 700; color: #374151; letter-spacing: 0.2px; line-height: 1.2; }
+  .cyc-btn .cyc-label { font-size: 12px; font-weight: 700; color: #374151; letter-spacing: 0.2px; }
   .cyc-btn .cyc-hint  { font-size: 10px; color: #9ca3af; font-weight: 500; }
 
   /* Active states per cycle */
-  #cyc-btn-1.active { border-color: #3b82f6; background: linear-gradient(90deg,#eff6ff,#fff); box-shadow: 0 2px 10px rgba(59,130,246,0.15); }
-  #cyc-btn-1.active::before { background: linear-gradient(180deg,#3b82f6,#2563eb); }
+  #cyc-btn-1.active { border-color: #3b82f6; background: linear-gradient(160deg,#eff6ff,#dbeafe); box-shadow: 0 4px 14px rgba(59,130,246,0.18); }
+  #cyc-btn-1.active::before { background: linear-gradient(90deg,#3b82f6,#2563eb); }
   #cyc-btn-1.active .cyc-label { color: #1d4ed8; }
   #cyc-btn-1.active .cyc-hint  { color: #3b82f6; font-weight: 600; }
 
-  #cyc-btn-2.active { border-color: #10b981; background: linear-gradient(90deg,#ecfdf5,#fff); box-shadow: 0 2px 10px rgba(16,185,129,0.15); }
-  #cyc-btn-2.active::before { background: linear-gradient(180deg,#10b981,#059669); }
+  #cyc-btn-2.active { border-color: #10b981; background: linear-gradient(160deg,#ecfdf5,#d1fae5); box-shadow: 0 4px 14px rgba(16,185,129,0.18); }
+  #cyc-btn-2.active::before { background: linear-gradient(90deg,#10b981,#059669); }
   #cyc-btn-2.active .cyc-label { color: #047857; }
   #cyc-btn-2.active .cyc-hint  { color: #10b981; font-weight: 600; }
 
-  #cyc-btn-3.active { border-color: #a855f7; background: linear-gradient(90deg,#faf5ff,#fff); box-shadow: 0 2px 10px rgba(168,85,247,0.15); }
-  #cyc-btn-3.active::before { background: linear-gradient(180deg,#a855f7,#7c3aed); }
+  #cyc-btn-3.active { border-color: #a855f7; background: linear-gradient(160deg,#faf5ff,#ede9fe); box-shadow: 0 4px 14px rgba(168,85,247,0.18); }
+  #cyc-btn-3.active::before { background: linear-gradient(90deg,#a855f7,#7c3aed); }
   #cyc-btn-3.active .cyc-label { color: #6d28d9; }
   #cyc-btn-3.active .cyc-hint  { color: #a855f7; font-weight: 600; }
 
@@ -789,7 +773,7 @@
   #cycleList {
     margin-top: 8px;
     display: flex; flex-direction: column; gap: 4px;
-    max-height: 90px;   /* ~3 rows for crop_day display */
+    max-height: 58px;   /* ~2 rows */
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 2px;
@@ -798,17 +782,10 @@
     display: flex; align-items: center; gap: 5px;
     background: #f4f6fb; border: 1px solid #dde3ed;
     border-radius: 6px; padding: 4px 7px; font-size: 11px;
-    flex-wrap: wrap;
   }
-  .cycle-row .cy-num  { font-weight: 800; color: #1a3a6a; min-width: 22px; }
+  .cycle-row .cy-num  { font-weight: 800; color: #1a3a6a; min-width: 18px; }
   .cycle-row .cy-p    { color: #228B22; font-weight: 600; }
   .cycle-row .cy-h    { color: #8B4513; font-weight: 600; }
-  .cycle-row .cy-days {
-    margin-left: 4px; font-size: 10px; font-weight: 700;
-    color: #92400e; background: #fef3c7;
-    border: 1px solid #fcd34d; border-radius: 4px;
-    padding: 1px 5px; white-space: nowrap;
-  }
   .cycle-row .cy-del  { margin-left: auto; cursor: pointer; color: #cc0000;
                         font-weight: 700; font-size: 13px; line-height: 1; }
   .cycle-row .cy-del:hover { color: #ff0000; }
@@ -840,8 +817,8 @@
   <div class="h-brand">
     <!-- <span class="h-icon">🛰️</span> -->
     <div>
-      <div class="h-title">NDVI Recheck</div>
-      <div class="h-sub">Planting &amp; Harvest (v.20 TH)</div>
+      <div class="h-title">NDVI Recheck — Thailand (update plot 1057 )</div>
+      <div class="h-sub">Planting &amp; Harvest (v.19 TH)</div>
     </div>
   </div>
 
@@ -987,24 +964,18 @@
           <div id="cycleSelectRow">
             <button type="button" class="cyc-btn" id="cyc-btn-1" onclick="selectCycle(1)">
               <span class="cyc-num">1</span>
-              <span class="cyc-btn-text">
-                <span class="cyc-label">Cycle 1</span>
-                <span class="cyc-hint" id="cyc-hint-1">not set</span>
-              </span>
+              <span class="cyc-label">Cycle 1</span>
+              <span class="cyc-hint" id="cyc-hint-1">not set</span>
             </button>
             <button type="button" class="cyc-btn" id="cyc-btn-2" onclick="selectCycle(2)">
               <span class="cyc-num">2</span>
-              <span class="cyc-btn-text">
-                <span class="cyc-label">Cycle 2</span>
-                <span class="cyc-hint" id="cyc-hint-2">not set</span>
-              </span>
+              <span class="cyc-label">Cycle 2</span>
+              <span class="cyc-hint" id="cyc-hint-2">not set</span>
             </button>
             <button type="button" class="cyc-btn" id="cyc-btn-3" onclick="selectCycle(3)">
               <span class="cyc-num">3</span>
-              <span class="cyc-btn-text">
-                <span class="cyc-label">Cycle 3</span>
-                <span class="cyc-hint" id="cyc-hint-3">not set</span>
-              </span>
+              <span class="cyc-label">Cycle 3</span>
+              <span class="cyc-hint" id="cyc-hint-3">not set</span>
             </button>
           </div>
         </div>
@@ -1062,13 +1033,6 @@
             <span class="cp-dot" style="background:#8B4513;"></span>
             <span class="cp-lbl">Harvest</span>
             <input type="date" id="hdateInput" class="cp-date-input" onchange="onHDateChange()">
-          </div>
-          <!-- Crop duration display -->
-          <div id="cropDayRow" style="display:none; margin-top:6px; background:#fffbeb;
-               border:1px solid #fcd34d; border-radius:7px; padding:4px 9px;
-               font-size:11px; color:#92400e; align-items:center; gap:5px;">
-            <span style="font-size:13px;">🌾</span>
-            <span id="cropDayLabel" style="font-weight:700;"></span>
           </div>
           <div id="cycleList"></div>
         </div>
@@ -1911,7 +1875,6 @@ function renderCurrentId() {
   clearCycleSelection();
   updateCycleHints(id);
   renderCycleList(id);
-  updateCropDay();  // reset crop-day display when switching ID
 
   // Update chart info bar — Province / District / X / Y from estimate
   const estRaw  = est?._raw || {};
@@ -2116,7 +2079,7 @@ function renderCurrentId() {
 // ═══════════════════════════════════════════════════════════════════
 function onPDateChange(doSnap=true) {
   let val = document.getElementById('pdateInput').value;
-  if (!val) { updateChartLines(); updateCropDay(); return; }
+  if (!val) { updateChartLines(); return; }
   if (doSnap) {
     const id = S.ids[S.currentIdx];
     const dates = (S.idData[id] || []).map(r => r._date);
@@ -2124,13 +2087,12 @@ function onPDateChange(doSnap=true) {
     document.getElementById('pdateInput').value = val;
   }
   updateChartLines();
-  updateCropDay();
   clearMode();
 }
 
 function onHDateChange(doSnap=true) {
   let val = document.getElementById('hdateInput').value;
-  if (!val) { updateChartLines(); updateCropDay(); return; }
+  if (!val) { updateChartLines(); return; }
   if (doSnap) {
     const id = S.ids[S.currentIdx];
     const dates = (S.idData[id] || []).map(r => r._date);
@@ -2138,29 +2100,7 @@ function onHDateChange(doSnap=true) {
     document.getElementById('hdateInput').value = val;
   }
   updateChartLines();
-  updateCropDay();
   clearMode();
-}
-
-/** Calculate and display crop duration (days from P to H) */
-function updateCropDay() {
-  const pd  = document.getElementById('pdateInput').value;
-  const hd  = document.getElementById('hdateInput').value;
-  const row = document.getElementById('cropDayRow');
-  const lbl = document.getElementById('cropDayLabel');
-  if (!row || !lbl) return;
-  if (pd && hd) {
-    const diff = Math.round((new Date(hd) - new Date(pd)) / (1000 * 60 * 60 * 24));
-    if (diff > 0) {
-      lbl.textContent = `P: ${toDisplay(pd)}  →  H: ${toDisplay(hd)}   |  🗓 ${diff} days`;
-      row.style.display = 'flex';
-    } else {
-      lbl.textContent = '⚠ Harvest before Planting';
-      row.style.display = 'flex';
-    }
-  } else {
-    row.style.display = 'none';
-  }
 }
 
 /** Redraw only the shapes/annotations without full re-render */
@@ -2389,7 +2329,6 @@ function addCycle() {
   syncIdList();
   renderSavedList();
   updateChartLines();
-  updateCropDay();  // clear crop-day bar after saving
 
   // Restore scroll after DOM update
   if (ca) ca.scrollTop = savedScroll;
@@ -2406,23 +2345,14 @@ function renderCycleList(id) {
   if (!el) return;
   const res = S.results[id];
   if (!res || !res.cycles || !res.cycles.length) { el.innerHTML = ''; return; }
-  el.innerHTML = res.cycles.map((c, i) => {
-    const days = (c.pdate && c.hdate)
-      ? Math.round((new Date(c.hdate) - new Date(c.pdate)) / (1000*60*60*24))
-      : null;
-    const daysTag = days != null
-      ? `<span class="cy-days">🗓 ${days} days</span>`
-      : '';
-    return `
+  el.innerHTML = res.cycles.map((c, i) => `
     <div class="cycle-row">
       <span class="cy-num">${c.cycleNum ? `C${c.cycleNum}` : `#${i+1}`}</span>
       <span class="cy-p">🌱 ${c.pdate ? toDisplay(c.pdate) : '—'}</span>
       <span class="cy-h">🌾 ${c.hdate ? toDisplay(c.hdate) : '—'}</span>
-      ${daysTag}
       ${c.remark ? `<span style="color:#888;font-size:10px;">${c.remark}</span>` : ''}
       <span class="cy-del" onclick="removeCycle('${id}', ${i})">×</span>
-    </div>`;
-  }).join('');
+    </div>`).join('');
 }
 
 // ── Remove a specific cycle ──────────────────────────────────────────
@@ -2500,9 +2430,6 @@ async function exportResults() {
         P_Date_est: fmtExport(r.pest),
         Pdate_user: fmtExport(c.pdate),
         Hdate_user: fmtExport(c.hdate),
-        Crop_day:   (c.pdate && c.hdate)
-                      ? Math.round((new Date(c.hdate) - new Date(c.pdate)) / (1000*60*60*24))
-                      : '',
         Remark:     c.remark    || '',
       });
     });
@@ -2624,10 +2551,10 @@ function naturalSort(a, b) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════════════
 //  DATE RANGE TOOLBAR
 // ═══════════════════════════════════════════════════════════════════
 
+/** Initialise From/To inputs to the full date range of the current ID */
 /** Initialise From/To inputs to last 1.5 years (548 days) of current ID */
 function initDateRangeInputs() {
   const id   = S.ids[S.currentIdx];
@@ -2637,8 +2564,8 @@ function initDateRangeInputs() {
   if (!sEl || !eEl) return;
   if (rows.length) {
     const sorted = rows.map(r => r._date).sort();
-    const end   = addDays(sorted[sorted.length - 1], 10);
-    const start = addDays(end, -548);
+    const end   = addDays(sorted[sorted.length - 1], 10);  // last date + 10 day pad
+    const start = addDays(end, -548);                       // step back 1.5 years
     sEl.value = start;
     eEl.value = end;
   }
@@ -2655,7 +2582,7 @@ function applyDateRange() {
   highlightActiveQuickBtn();
 }
 
-/** Quick-range buttons: set window to today-days to today+30 */
+/** Quick-range buttons: set window to today−days → today+30 */
 function setQuickRange(days) {
   const s = addDays(toISO(new Date()), -days);
   const e = addDays(toISO(new Date()),    30);
@@ -2665,7 +2592,7 @@ function setQuickRange(days) {
   highlightActiveQuickBtn(days);
 }
 
-/** All data: zoom to full NDVI date range */
+/** All data: zoom out to cover the full NDVI date range for this ID */
 function setFullRange() {
   const id = S.ids[S.currentIdx];
   if (!id) return;
@@ -2680,10 +2607,11 @@ function setFullRange() {
   highlightActiveQuickBtn('all');
 }
 
-/** Reset date range */
+/** Reset — show all available data for the current ID */
 function resetDateRange() {
   setFullRange();
 }
+
 
 /** Highlight the active quick-range button */
 function highlightActiveQuickBtn(active) {
@@ -2708,6 +2636,7 @@ function jumpToId(id) {
 window.addEventListener('load', init);
 
 // Resize Plotly chart whenever the browser window is resized
+// (Plotly responsive:true handles this, but explicit call ensures correct redraw)
 window.addEventListener('resize', () => {
   if (document.getElementById('chart')?.children.length) {
     Plotly.Plots.resize('chart');
