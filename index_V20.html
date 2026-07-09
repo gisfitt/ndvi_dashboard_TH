@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NDVI Recheck — Thailand</title>
+<title>NDVI Recheck — Thailand </title>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -515,7 +515,7 @@
   }
 
   /* Chart info bar — Province + X/Y above the chart */
-  #ciBar {
+  #chartInfo {
     display: flex;
     align-items: center;
     gap: 20px;
@@ -528,19 +528,19 @@
     color: #333;
     flex-wrap: wrap;
   }
-  #ciBar .ci-item {
+  #chartInfo .ci-item {
     display: flex;
     align-items: center;
     gap: 5px;
   }
-  #ciBar .ci-label {
+  #chartInfo .ci-label {
     font-weight: 700;
     color: #666;
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.4px;
   }
-  #ciBar .ci-val {
+  #chartInfo .ci-val {
     color: #1a3a6a;
     font-weight: 600;
   }
@@ -841,16 +841,16 @@
     <!-- <span class="h-icon">🛰️</span> -->
     <div>
       <div class="h-title">NDVI Recheck</div>
-      <div class="h-sub">Planting &amp; Harvest (v.22 TH)</div>
+      <div class="h-sub">Planting &amp; Harvest (v.20 TH)</div>
     </div>
   </div>
 
   <div class="hdiv"></div>
 
-  <div class="hgroup">
-    <label>Country</label>
-    <select id="countrySelect" style="display:none;" onchange="onCountryChange()"><option value="Thailand" selected>Thailand</option></select>
-  </div>
+  <!-- Country fixed to Thailand — no selector shown -->
+  <select id="countrySelect" style="display:none;">
+    <option value="Thailand" selected>Thailand</option>
+  </select>
 
   <div class="hgroup">
     <label>Raw NDVI</label>
@@ -924,10 +924,6 @@
         P_est
       </span>
       <span class="legend-item">
-        <span style="display:inline-block;width:20px;border-top:2px dotted #0077b6;vertical-align:middle"></span>
-        H_est
-      </span>
-      <span class="legend-item">
         <span style="display:inline-block;width:20px;border-top:2.5px solid #228B22;vertical-align:middle"></span>
         Planting
       </span>
@@ -960,7 +956,7 @@
     </div>
 
     <!-- Info bar: Province / District / X / Y above chart -->
-    <div id="ciBar">
+    <div id="chartInfo">
       <div class="ci-item">
         <span class="ci-label">Province</span>
         <span class="ci-val" id="ciProvince">—</span>
@@ -1052,12 +1048,10 @@
         <!-- Dates card -->
         <div class="ctrl-card" id="cardDates">
           <div class="ctrl-card-title">📅 Dates</div>
-          <div id="estDatesContainer" style="margin-bottom:2px;">
-            <div class="cp-row">
-              <span class="cp-dot" style="background:magenta;"></span>
-              <span class="cp-lbl">P_est</span>
-              <div class="detected-val">—</div>
-            </div>
+          <div class="cp-row">
+            <span class="cp-dot" style="background:magenta;"></span>
+            <span class="cp-lbl">P_est</span>
+            <div class="detected-val" id="detectedPDate">—</div>
           </div>
           <div class="cp-row" style="margin-top:6px;">
             <span class="cp-dot" style="background:#228B22;"></span>
@@ -1161,49 +1155,14 @@ const COL_CANDIDATES = {
     'pdate', 'Pdate', 'PDate', 'P_date', 'p_date',
     'planting_date', 'Planting_date', 'Planting_Date',
   ],
-  hdate_est:[
-    'H_Date_est', 'Hdate_est', 'H_date_est', 'hdate_est', 'HDate_est',
-    'H_Date_C1_est', 'Hdate_C1_est', 'H_Date_C1',
-    'harvest_date', 'Harvest_date', 'Harvest_Date',
-  ],
-  // Multi-year prefix-matching — est-only candidates (no generic pdate/hdate fallbacks)
-  pdate_est_multi: [
-    'P_Date_est', 'Pdate_est', 'P_date_est', 'pdate_est', 'PDate_est',
-    'P_Date_est_C1', 'Pdate_est_C1',
-  ],
-  hdate_est_multi: [
-    'H_Date_est', 'Hdate_est', 'H_date_est', 'hdate_est', 'HDate_est',
-    'H_Date_est_C1', 'Hdate_est_C1',
-  ],
 };
 
 function findCol(obj, key) {
   const keys = Object.keys(obj);
-  // 1) exact match
   for (const c of COL_CANDIDATES[key]) {
     if (keys.includes(c)) return c;
   }
-  // 2) prefix match  e.g. "P_Date_est_C3_2526" matches candidate "P_Date_est"
-  for (const c of COL_CANDIDATES[key]) {
-    const found = keys.find(k => k.startsWith(c + '_'));
-    if (found) return found;
-  }
   return null;
-}
-
-/** Returns ALL matching columns (exact + prefix) — used for multi-year est columns */
-function findAllCols(obj, key) {
-  const keys   = Object.keys(obj);
-  const seen   = new Set();
-  const result = [];
-  for (const c of (COL_CANDIDATES[key] || [])) {
-    // exact
-    if (keys.includes(c) && !seen.has(c)) { seen.add(c); result.push(c); }
-    // prefix  e.g. key="P_Date_est", col in file="P_Date_est_C1_2526"
-    keys.filter(k => k.startsWith(c + '_') && !seen.has(k))
-        .forEach(k => { seen.add(k); result.push(k); });
-  }
-  return result;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1512,11 +1471,8 @@ async function loadEstimateData(filename) {
     dbg('dbgCols', allCols.join(' | '), '#1a5fa0');
 
     let idCol   = findCol(records[0], 'id');
-    const pdCols  = findAllCols(records[0], 'pdate_est_multi');
-    const hdCols  = findAllCols(records[0], 'hdate_est_multi');
+    let pdCol   = findCol(records[0], 'pdate_est');
     const provCol = findCol(records[0], 'province');
-    let pdCol = pdCols[0] || null;   // first match — used for debug/fallback
-    let hdCol = hdCols[0] || null;
 
     // Fallback: regex scan for any column with p+date / planting
     if (!pdCol) pdCol = allCols.find(c => /p.*date|planting/i.test(c)) || null;
@@ -1559,13 +1515,10 @@ async function loadEstimateData(filename) {
         crop:  g.crop_col  ? String(r[g.crop_col]  ?? '').trim() : '',
       })).filter(c => c.pdate || c.hdate);   // skip fully-empty cycles
       S.estimates[id] = {
-        P_Date_est: pdCol   ? String(r[pdCol] ?? '').trim() : null,  // first — backward compat
-        H_Date_est: hdCol   ? String(r[hdCol] ?? '').trim() : null,  // first — backward compat
-        P_Date_est_vals: pdCols.map(col => ({ col, val: String(r[col] ?? '').trim() })),
-        H_Date_est_vals: hdCols.map(col => ({ col, val: String(r[col] ?? '').trim() })),
+        P_Date_est: pdCol   ? String(r[pdCol] ?? '').trim() : null,
         Province:   provCol ? String(r[provCol] ?? '').trim() : '',
         cycles,
-        _idCol: idCol, _raw: r,
+        _idCol: idCol, _pdCol: pdCol, _raw: r,
       };
     });
 
@@ -1943,45 +1896,15 @@ function renderCurrentId() {
 
   // Estimate
   const est      = getEstimate(id) || null;
+  const pestISO  = est ? toISO(parseDate(est.P_Date_est)) : null;
 
   // User saved dates
   const saved  = S.results[id] || {};
   const pdISO  = saved.pdate || null;
   const hdISO  = saved.hdate || null;
 
-  // ── Update sidebar: est dates (multi-year support) ─────────────
-  const P_EST_COLORS = ['#ff00ff','#cc00cc','#9900aa','#660088'];
-  const H_EST_COLORS = ['#0077b6','#0096c7','#00b4d8','#023e8a'];
-  const estCont = document.getElementById('estDatesContainer');
-  if (estCont) {
-    const pVals = est?.P_Date_est_vals || (est?.P_Date_est ? [{col:'P_Date_est', val:est.P_Date_est}] : []);
-    const hVals = est?.H_Date_est_vals || (est?.H_Date_est ? [{col:'H_Date_est', val:est.H_Date_est}] : []);
-    let html = '';
-    if (!pVals.length && !hVals.length) {
-      html = '<div class="cp-row"><span class="cp-dot" style="background:#ccc;"></span><span class="cp-lbl">P_est</span><div class="detected-val">—</div></div>';
-    }
-    pVals.forEach((v, i) => {
-      const iso = toISO(parseDate(v.val));
-      const color = P_EST_COLORS[i % P_EST_COLORS.length];
-      const suffix = v.col.replace(/^P_Date_est_?/, '');
-      const lbl = suffix ? `P_est <span style="font-size:9px;opacity:.8;">${suffix}</span>` : 'P_est';
-      html += `<div class="cp-row" style="margin-top:${i>0?'3':'0'}px;">
-        <span class="cp-dot" style="background:${color};"></span>
-        <span class="cp-lbl" style="font-size:10px;">${lbl}</span>
-        <div class="detected-val">${iso ? toDisplay(iso) : '—'}</div></div>`;
-    });
-    hVals.forEach((v, i) => {
-      const iso = toISO(parseDate(v.val));
-      const color = H_EST_COLORS[i % H_EST_COLORS.length];
-      const suffix = v.col.replace(/^H_Date_est_?/, '');
-      const lbl = suffix ? `H_est <span style="font-size:9px;opacity:.8;">${suffix}</span>` : 'H_est';
-      html += `<div class="cp-row" style="margin-top:3px;">
-        <span class="cp-dot" style="background:${color};"></span>
-        <span class="cp-lbl" style="font-size:10px;color:#004a80;">${lbl}</span>
-        <div class="detected-val" style="background:linear-gradient(135deg,#e8f4fd,#cce4f7);border-color:#88c0dc;color:#004a80;">${iso ? toDisplay(iso) : '—'}</div></div>`;
-    });
-    estCont.innerHTML = html;
-  }
+  // Update sidebar
+  document.getElementById('detectedPDate').textContent = pestISO ? toDisplay(pestISO) : '—';
   document.getElementById('pdateInput').value  = '';
   document.getElementById('hdateInput').value  = '';
   document.getElementById('remarkInput').value = '';
@@ -2061,20 +1984,14 @@ function renderCurrentId() {
     });
   });
 
-  // P_Date_est — magenta family, dotted (multi-year)
-  (est?.P_Date_est_vals || (est?.P_Date_est ? [{col:'P_Date_est',val:est.P_Date_est}] : []))
-    .forEach((v, i) => {
-      const iso = toISO(parseDate(v.val)); if (!iso) return;
-      shapes.push({ type:'line', xref:'x', yref:'paper', x0:iso, x1:iso, y0:0, y1:1,
-        line:{ color:['#ff00ff','#cc00cc','#9900aa','#660088'][i%4], width:2, dash:'dot' }});
+  // P_Date_est — magenta dotted
+  if (pestISO) {
+    shapes.push({
+      type: 'line', xref: 'x', yref: 'paper',
+      x0: pestISO, x1: pestISO, y0: 0, y1: 1,
+      line: { color: 'magenta', width: 2, dash: 'dot' },
     });
-  // H_Date_est — blue family, dotted (multi-year)
-  (est?.H_Date_est_vals || (est?.H_Date_est ? [{col:'H_Date_est',val:est.H_Date_est}] : []))
-    .forEach((v, i) => {
-      const iso = toISO(parseDate(v.val)); if (!iso) return;
-      shapes.push({ type:'line', xref:'x', yref:'paper', x0:iso, x1:iso, y0:0, y1:1,
-        line:{ color:['#0077b6','#0096c7','#00b4d8','#023e8a'][i%4], width:2, dash:'dot' }});
-    });
+  }
 
   // User planting date — solid green
   if (pdISO) {
@@ -2104,20 +2021,7 @@ function renderCurrentId() {
     bordercolor: color, borderwidth: 1, borderpad: 2,
   });
 
-  (est?.P_Date_est_vals || (est?.P_Date_est ? [{col:'P_Date_est',val:est.P_Date_est}] : []))
-    .forEach((v, i) => {
-      const iso = toISO(parseDate(v.val)); if (!iso) return;
-      const sfx = v.col.replace(/^P_Date_est_?/,'');
-      annotations.push(labelAnnotation(iso, sfx ? `P_est ${sfx}` : 'P_est',
-        ['#ff00ff','#cc00cc','#9900aa','#660088'][i%4], 0.97 - i*0.07));
-    });
-  (est?.H_Date_est_vals || (est?.H_Date_est ? [{col:'H_Date_est',val:est.H_Date_est}] : []))
-    .forEach((v, i) => {
-      const iso = toISO(parseDate(v.val)); if (!iso) return;
-      const sfx = v.col.replace(/^H_Date_est_?/,'');
-      annotations.push(labelAnnotation(iso, sfx ? `H_est ${sfx}` : 'H_est',
-        ['#0077b6','#0096c7','#00b4d8','#023e8a'][i%4], 0.93 - i*0.07));
-    });
+  if (pestISO) annotations.push(labelAnnotation(pestISO, 'P_est', 'magenta',   0.97));
   if (pdISO)   annotations.push(labelAnnotation(pdISO,   'P',     '#228B22',   0.87));
   if (hdISO)   annotations.push(labelAnnotation(hdISO,   'H',     '#8B4513',   0.87));
 
@@ -2267,6 +2171,7 @@ function updateChartLines() {
   if (!rows.length) return;
 
   const est     = S.estimates[id] || null;
+  const pestISO = est ? toISO(parseDate(est.P_Date_est)) : null;
   const dates   = rows.map(r => r._date);
 
   const shapes = [];
@@ -2293,18 +2198,11 @@ function updateChartLines() {
     line:{color:'darkred', width:1.5, dash:'dash'},
   }));
 
-  (est?.P_Date_est_vals || (est?.P_Date_est ? [{col:'P_Date_est',val:est.P_Date_est}] : []))
-    .forEach((v,i) => {
-      const iso = toISO(parseDate(v.val)); if (!iso) return;
-      shapes.push({type:'line',xref:'x',yref:'paper',x0:iso,x1:iso,y0:0,y1:1,
-        line:{color:['#ff00ff','#cc00cc','#9900aa','#660088'][i%4],width:2,dash:'dot'}});
-    });
-  (est?.H_Date_est_vals || (est?.H_Date_est ? [{col:'H_Date_est',val:est.H_Date_est}] : []))
-    .forEach((v,i) => {
-      const iso = toISO(parseDate(v.val)); if (!iso) return;
-      shapes.push({type:'line',xref:'x',yref:'paper',x0:iso,x1:iso,y0:0,y1:1,
-        line:{color:['#0077b6','#0096c7','#00b4d8','#023e8a'][i%4],width:2,dash:'dot'}});
-    });
+  if (pestISO) shapes.push({
+    type:'line', xref:'x', yref:'paper',
+    x0:pestISO, x1:pestISO, y0:0, y1:1,
+    line:{color:'magenta', width:2, dash:'dot'},
+  });
   // Draw all saved cycles for this ID
   const savedCycles = (S.results[id] && S.results[id].cycles) ? S.results[id].cycles : [];
   // Also show current inputs as a preview cycle (not yet added)
@@ -2314,28 +2212,10 @@ function updateChartLines() {
   const allCycles = [...savedCycles, ...previewCycles];
 
   const annotations = [];
-  (est?.P_Date_est_vals || (est?.P_Date_est ? [{col:'P_Date_est',val:est.P_Date_est}] : []))
-    .forEach((v,i) => {
-      const iso = toISO(parseDate(v.val)); if (!iso) return;
-      const sfx = v.col.replace(/^P_Date_est_?/,'');
-      const lbl = sfx ? `P_est ${sfx}` : 'P_est';
-      const clr = ['#ff00ff','#cc00cc','#9900aa','#660088'][i%4];
-      annotations.push({x:iso,y:0.97-i*0.07,xref:'x',yref:'paper',
-        text:`<b>${lbl}</b>`,showarrow:false,xanchor:'left',
-        font:{color:clr,size:10},bgcolor:'rgba(255,255,255,0.85)',
-        bordercolor:clr,borderwidth:1,borderpad:2});
-    });
-  (est?.H_Date_est_vals || (est?.H_Date_est ? [{col:'H_Date_est',val:est.H_Date_est}] : []))
-    .forEach((v,i) => {
-      const iso = toISO(parseDate(v.val)); if (!iso) return;
-      const sfx = v.col.replace(/^H_Date_est_?/,'');
-      const lbl = sfx ? `H_est ${sfx}` : 'H_est';
-      const clr = ['#0077b6','#0096c7','#00b4d8','#023e8a'][i%4];
-      annotations.push({x:iso,y:0.93-i*0.07,xref:'x',yref:'paper',
-        text:`<b>${lbl}</b>`,showarrow:false,xanchor:'left',
-        font:{color:clr,size:10},bgcolor:'rgba(255,255,255,0.85)',
-        bordercolor:clr,borderwidth:1,borderpad:2});
-    });
+  if (pestISO) annotations.push({ x:pestISO, y:0.97, xref:'x', yref:'paper',
+    text:'<b>P_est</b>', showarrow:false, xanchor:'left',
+    font:{color:'magenta',size:10}, bgcolor:'rgba(255,255,255,0.85)',
+    bordercolor:'magenta', borderwidth:1, borderpad:2 });
 
   allCycles.forEach((c, i) => {
     const label   = c.preview ? 'P?' : `P${i + 1}`;
@@ -2485,10 +2365,7 @@ function addCycle() {
     S.results[id] = {
       cycles:   [],
       province: est.Province || (S.idData[id]?.[0]?._prov) || '',
-      pest:      est.P_Date_est ? toISO(parseDate(est.P_Date_est)) : null,
-      hest:      est.H_Date_est ? toISO(parseDate(est.H_Date_est)) : null,
-      pest_vals: (est.P_Date_est_vals||[]).map(v=>({col:v.col, iso:toISO(parseDate(v.val))})),
-      hest_vals: (est.H_Date_est_vals||[]).map(v=>({col:v.col, iso:toISO(parseDate(v.val))})),
+      pest:     est.P_Date_est ? toISO(parseDate(est.P_Date_est)) : null,
     };
   }
 
@@ -2620,12 +2497,7 @@ async function exportResults() {
         // Cycle:      i + 1,
         Crop_cycle:   c.cycleNum != null ? `C${c.cycleNum}` : '',
         Province:   r.province  || '',
-        ...(r.pest_vals?.length
-          ? r.pest_vals.reduce((a,v)=>{a[v.col]=fmtExport(v.iso);return a;},{})
-          : {P_Date_est: fmtExport(r.pest)}),
-        ...(r.hest_vals?.length
-          ? r.hest_vals.reduce((a,v)=>{a[v.col]=fmtExport(v.iso);return a;},{})
-          : {H_Date_est: fmtExport(r.hest)}),
+        P_Date_est: fmtExport(r.pest),
         Pdate_user: fmtExport(c.pdate),
         Hdate_user: fmtExport(c.hdate),
         Crop_day:   (c.pdate && c.hdate)
