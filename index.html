@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NDVI Recheck — Thailand Crop 3 </title>
-<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<title>NDVI Recheck - Thailand</title>  <!-- version V29 TH -->
+<script src="https://cdn.plot.ly/plotly-basic-2.27.0.min.js" defer></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -24,14 +24,15 @@
     background: linear-gradient(90deg, #0f3d0f 0%, #1a5f1a 40%, #1e7a1e 100%);
     color: white;
     padding: 0 18px;
-    height: 48px;
+    height: 56px;
     display: flex;
     align-items: center;
     gap: 14px;
     flex-shrink: 0;
     box-shadow: 0 2px 10px rgba(0,0,0,0.35);
     flex-wrap: nowrap;
-    overflow: hidden;
+    overflow: visible;   /* lets the dataset dropdown menu hang below the header */
+    position: relative; z-index: 1500;
   }
   /* Brand */
   .h-brand {
@@ -74,9 +75,31 @@
   }
   #header select:hover { background: rgba(255,255,255,0.22); }
   #header select option { color: #222; background: white; font-weight: 400; }
-  #countrySelect  { width: 110px; }
+  /* Dataset switch: custom dropdown (grouped by crop), same height / radius as the dropdowns next to it */
+  #header select { height: 30px; }
+  .dd { position: relative; width: 190px; }
+  .dd-btn {
+    width: 100%; height: 30px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 0 10px; border-radius: 6px; border: 1px solid #fff; background: #fff; color: #0f3d0f;
+    font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .dd-btn:after { content: ""; width: 6px; height: 6px; flex: none; border-right: 1.5px solid #0f3d0f; border-bottom: 1.5px solid #0f3d0f; transform: rotate(45deg) translateY(-2px); transition: transform .15s; }
+  .dd.open .dd-btn:after { transform: rotate(225deg) translateY(-2px); }
+  .dd-btn:focus-visible { outline: 2px solid #ffd54f; outline-offset: 1px; }
+  .dd-menu {
+    display: none; position: absolute; left: 0; top: 34px; min-width: 100%; z-index: 2000;
+    background: #fff; color: #222; border-radius: 8px; overflow: hidden; box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+  }
+  .dd.open .dd-menu { display: block; }
+  .dd-grp { padding: 6px 12px 4px; font-size: 9px; letter-spacing: .5px; text-transform: uppercase; color: #888; background: #f6f6f4; }
+  .dd-opt { display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: 12px; cursor: pointer; border-bottom: 1px solid #eee; white-space: nowrap; }
+  .dd-opt:hover { background: #f1f6ea; }
+  .dd-opt .ck { width: 12px; font-size: 11px; color: #27500a; }
+  .dd-opt.on { background: #eaf3de; color: #27500a; font-weight: 700; }
+  .dd-opt.dis { color: #aaa; cursor: default; background: #fff; }
+  #countrySelect { display: none; }
   #combineSelect  { width: 160px; }
-  #estimateSelect { width: 150px; }
+  #estimateSelect { width: 160px; }
   #estDebug {
     font-size: 10px; opacity: 0.7;
     background: rgba(0,0,0,0.25);
@@ -136,6 +159,7 @@
     font-size: 14px; font-weight: 800; color: #1a3a6a;
     margin-bottom: 10px; letter-spacing: 0.2px;
   }
+  .cs-sub { font-size: 11px; font-weight: 600; color: #5a6b8c; margin-top: 2px; letter-spacing: 0; }
   .cs-stats {
     display: grid; grid-template-columns: 1fr 1fr;
     gap: 6px; margin-bottom: 8px;
@@ -212,6 +236,16 @@
     transition: border-color 0.15s;
   }
   #provFilter:focus { border-color: #4a90d9; }
+  #distFilter {
+    width: 100%; padding: 6px 8px;
+    border: 1px solid #d0d7e6; border-radius: 8px;
+    font-size: 11px; font-weight: 600; background: white;
+    margin-bottom: 6px; color: #1a3a6a;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    outline: none; cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  #distFilter:focus { border-color: #4a90d9; }
   #idSearch {
     width: 100%; padding: 7px 10px;
     border: 1px solid #d0d7e6; border-radius: 8px;
@@ -380,6 +414,16 @@
   }
   #btnExport:hover { background: linear-gradient(135deg, #163e82, #1e50b0); transform: translateY(-1px); }
   #exportMsg { font-size: 11px; color: #1a4fa0; text-align: center; margin-top: 4px; height: 14px; }
+
+  #btnDownloadEst {
+    width: 100%; padding: 7px;
+    background: linear-gradient(135deg, #2e7d5a, #3aaa78);
+    color: white; border: none; border-radius: 5px;
+    font-size: 12px; font-weight: 700; cursor: pointer;
+    transition: all 0.2s; margin-top: 4px;
+  }
+  #btnDownloadEst:hover { background: linear-gradient(135deg, #215e43, #2e8a5f); transform: translateY(-1px); }
+  #btnDownloadEst:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 
   /* ── Chart area ── */
   #chartArea {
@@ -825,6 +869,125 @@
     font-family: monospace;
     margin: 0 1px;
   }
+
+  /* ═══════════════════════════════════════════════════
+     RESPONSIVE — Tablet & Mobile
+  ═══════════════════════════════════════════════════ */
+
+  /* Sidebar toggle button — hidden on desktop */
+  #sbToggleBtn {
+    display: none;
+    align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.30);
+    color: white;
+    border-radius: 8px;
+    width: 36px; height: 32px;
+    font-size: 17px; cursor: pointer;
+    flex-shrink: 0; line-height: 1;
+    transition: background 0.15s;
+  }
+  #sbToggleBtn:hover { background: rgba(255,255,255,0.25); }
+
+  /* Backdrop for sidebar drawer */
+  #sbBackdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 99;
+  }
+  #sbBackdrop.show { display: block; }
+
+  /* ── Tablet (769px – 1100px) ── */
+  @media (max-width: 1100px) {
+    #estDebug     { display: none; }
+    #sidebar      { width: 190px; min-width: 160px; }
+    #combineSelect  { width: 130px; }
+    #estimateSelect { width: 120px; }
+  }
+
+  /* ── Mobile (≤ 768px) ── */
+  @media (max-width: 768px) {
+
+    /* Body: allow scroll, no fixed height */
+    body { height: auto; min-height: 100vh; overflow-y: auto; }
+
+    /* Header: wrap into 2 lines */
+    #header {
+      height: auto;
+      min-height: 48px;
+      padding: 6px 12px;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      align-items: center;
+    }
+    #sbToggleBtn { display: flex; }
+    .hdiv        { display: none; }
+    #estDebug    { display: none; }
+    .h-sub       { display: none; }
+    .h-title     { font-size: 13px; }
+    #header .hgroup      { flex: 1; min-width: 80px; }
+    #header .hgroup-ds { flex: 1 1 100%; min-width: 0; }
+    .dd { width: 100%; }
+    #combineSelect       { width: 100%; font-size: 11px; }
+    #estimateSelect      { width: 100%; font-size: 11px; }
+    #statusBadge         { font-size: 10px; padding: 3px 8px; margin-left: 0; }
+
+    /* Main: stack sidebar + chart vertically */
+    #main { flex-direction: column; overflow: visible; height: auto; }
+
+    /* Sidebar: slide-in drawer from left */
+    #sidebar {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: 270px;
+      z-index: 100;
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+      box-shadow: 4px 0 24px rgba(0,0,0,0.30);
+    }
+    #sidebar.sb-open { transform: translateX(0); }
+
+    /* Chart area: full width, normal flow */
+    #chartArea { width: 100%; overflow-y: visible; }
+
+    /* Chart: shorter on mobile */
+    #chart { height: clamp(240px, 55vw, 380px); }
+
+    /* Chart info bar: horizontal scroll */
+    #chartInfo {
+      overflow-x: auto; flex-wrap: nowrap;
+      gap: 8px; font-size: 10px;
+      padding: 5px 10px;
+    }
+    #chartInfo span { flex-shrink: 0; }
+
+    /* CI bar: compact */
+    #ciBar { gap: 8px; font-size: 11px; flex-wrap: wrap; }
+
+    /* Date range bar: smaller inputs */
+    #dateRangeBar { gap: 5px; padding: 5px 10px; }
+    #dateRangeBar input[type="date"] { width: 110px; font-size: 11px; }
+    #dateRangeBar label { font-size: 10px; }
+    .drb-btn { padding: 3px 6px; font-size: 10px; }
+
+    /* Control panel rows: column on mobile */
+    #cycleSelectRow { flex-direction: column; }
+    .cyc-btn        { width: 100%; }
+    #setDateRow     { flex-direction: column; }
+    .set-btn        { justify-content: flex-start; padding: 8px 14px; }
+    #cpRow2         { flex-direction: column; }
+
+    /* Saved list: taller on mobile since more space */
+    #savedList { max-height: 120px; }
+  }
+
+  /* ── Small phone (≤ 400px) ── */
+  @media (max-width: 400px) {
+    #chart { height: clamp(220px, 60vw, 320px); }
+    #header .hgroup { min-width: 70px; }
+    .h-title { font-size: 12px; }
+  }
 </style>
 </head>
 <body>
@@ -835,22 +998,31 @@
   <div id="loadingText">Loading…</div>
 </div>
 
+<!-- Sidebar backdrop (mobile) -->
+<div id="sbBackdrop" onclick="closeSidebar()"></div>
+
 <!-- Header -->
 <div id="header">
+  <button id="sbToggleBtn" onclick="toggleSidebar()" title="Menu">☰</button>
   <div class="h-brand">
     <!-- <span class="h-icon">🛰️</span> -->
     <div>
-      <div class="h-title">NDVI Recheck Crop 3 </div>
-      <div class="h-sub">Planting &amp; Harvest (v.22 TH)</div>
+      <div class="h-title">NDVI Recheck · Thailand</div>
+      <div class="h-sub">Planting &amp; Harvest (v.29)</div>
     </div>
   </div>
 
   <div class="hdiv"></div>
 
-  <div class="hgroup">
-    <label>Country</label>
-    <select id="countrySelect" style="display:none;" onchange="onCountryChange()"><option value="Thailand" selected>Thailand</option></select>
+  <div class="hgroup hgroup-ds">
+    <!-- Thailand-only build: chooses the dataset (data folder thailand/<dataset>/, list = DATASETS in the script).
+         #countrySelect stays as the hidden value holder the rest of the code reads. -->
+    <label>Dataset</label>
+    <div class="dd" id="datasetDD"><button type="button" class="dd-btn" id="ddBtn" aria-haspopup="listbox" aria-expanded="false"><span id="ddLabel"></span></button><div class="dd-menu" id="ddMenu" role="listbox"></div></div>
+    <select id="countrySelect" onchange="onCountryChange(); syncDatasetButtons()" aria-label="Dataset"></select>
   </div>
+
+  <div class="hdiv"></div>
 
   <div class="hgroup">
     <label>Raw NDVI</label>
@@ -893,7 +1065,10 @@
         <button type="button" onclick="nextId()" title="Next (→)">&#9654;</button>
       </div>
       <select id="provFilter" onchange="applyProvFilter()">
-        <option value="">🗂 All Provinces</option>
+        <option value="">All Provinces</option>
+      </select>
+      <select id="distFilter" onchange="applyDistFilter()" title="Filter by district (pick a province first to narrow the list)">
+        <option value="">All Districts</option>
       </select>
       <input type="text" id="idSearch" placeholder="🔍 Search ID…"
              oninput="onIdSearch()" autocomplete="off">
@@ -1107,6 +1282,7 @@
             <button type="button" id="btnReset" onclick="resetResults()" title="Clear all saved results">🗑 Reset</button>
           </div>
           <div id="exportMsg" style="font-size:11px;color:#1a4fa0;text-align:center;margin-top:3px;height:14px;"></div>
+          <button type="button" id="btnDownloadEst" onclick="downloadEstJson()" disabled>📂 Download est_ndvi.csv</button>
         </div>
 
       </div><!-- /cpRow2 -->
@@ -1115,22 +1291,96 @@
     <div id="emptyState" style="display:none">
       <div class="es-icon">📊</div>
       <div class="es-msg">No data loaded</div>
-      <div class="es-hint">Place raw_ndvi.json and est_ndvi.json in the country folder (e.g. cambodia/)</div>
+      <div class="es-hint">Place raw_ndvi.json and est_ndvi.json in the country folder (thailand/&lt;dataset&gt;/, e.g. thailand/corn_crop12/)</div>
     </div>
   </div>
 
 </div><!-- /main -->
 
 <script>
+// ─── Mobile sidebar toggle ───────────────────────────────────────
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const bd = document.getElementById('sbBackdrop');
+  const open = sb.classList.toggle('sb-open');
+  bd.classList.toggle('show', open);
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('sb-open');
+  document.getElementById('sbBackdrop').classList.remove('show');
+}
+// Close sidebar when a plot ID is selected (mobile UX)
+document.addEventListener('DOMContentLoaded', function() {
+  var idSel = document.getElementById('idSelect');
+  if (idSel) idSel.addEventListener('change', function() {
+    if (window.innerWidth <= 768) closeSidebar();
+  });
+});
+
 // ═══════════════════════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════════════════════
+// Datasets under thailand/<dir>/ (each folder holds raw_index.json, raw/ and est_ndvi.json).
+// To add one (e.g. cassava): put its folder next to the others and add a line here - nothing else to change.
+const DATASETS = [
+  { dir: 'corn_crop12', group: 'Corn', short: 'Crop 1-2', label: 'Corn · Crop 1-2' },
+  { dir: 'corn_crop3',  group: 'Corn', short: 'Crop 3',   label: 'Corn · Crop 3' },
+  // { dir: 'cassava_crop1', group: 'Cassava', short: 'Crop 1', label: 'Cassava · Crop 1' },
+];
+const DATASET_SOON = ['Cassava'];   // groups shown greyed-out until their first dataset is added above
+function syncDatasetButtons() {
+  const v = document.getElementById('countrySelect').value;
+  const d = DATASETS.find(x => x.dir === v) || DATASETS[0];
+  document.getElementById('ddLabel').textContent = d.label;
+  document.querySelectorAll('#ddMenu .dd-opt[data-dir]').forEach(o => {
+    const on = o.dataset.dir === v;
+    o.classList.toggle('on', on);
+    o.setAttribute('aria-selected', on ? 'true' : 'false');
+    o.querySelector('.ck').textContent = on ? '✓' : '';
+  });
+}
+(function fillDatasetSelect() {
+  const sel = document.getElementById('countrySelect');
+  const dd = document.getElementById('datasetDD');
+  const btn = document.getElementById('ddBtn');
+  const menu = document.getElementById('ddMenu');
+  sel.innerHTML = DATASETS.map(d => `<option value="${d.dir}">${d.label}</option>`).join('');
+  const groups = [...new Set(DATASETS.map(d => d.group))];
+  DATASET_SOON.forEach(g => { if (!groups.includes(g)) groups.push(g); });
+  menu.innerHTML = groups.map(g => {
+    const items = DATASETS.filter(d => d.group === g);
+    const body = items.length
+      ? items.map(d => `<div class="dd-opt" role="option" tabindex="-1" data-dir="${d.dir}"><span class="ck"></span>${d.short}</div>`).join('')
+      : `<div class="dd-opt dis" role="option" aria-disabled="true"><span class="ck"></span>Coming soon</div>`;
+    return `<div class="dd-grp">${g}</div>${body}`;
+  }).join('');
+  const setOpen = o => { dd.classList.toggle('open', o); btn.setAttribute('aria-expanded', o ? 'true' : 'false'); };
+  btn.addEventListener('click', e => { e.stopPropagation(); setOpen(!dd.classList.contains('open')); });
+  menu.addEventListener('click', e => {
+    const o = e.target.closest('.dd-opt[data-dir]');
+    if (!o) return;
+    setOpen(false);
+    if (o.dataset.dir === sel.value) return;
+    sel.value = o.dataset.dir;
+    syncDatasetButtons();
+    onCountryChange();
+  });
+  document.addEventListener('click', e => { if (!dd.contains(e.target)) setOpen(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { setOpen(false); btn.focus(); } });
+  syncDatasetButtons();
+})();
+
 const S = {
   country:    'Thailand',
+  crop:       DATASETS[0].dir,     // selected dataset = sub-folder of thailand/
   combineFile:  null,
   estimateFile: null,
+  _estTable:    null,   // { h, d } of est_ndvi.json, for the CSV download
+  _estFilename: null,   // filename of loaded estimate file
   allRows:     [],      // raw records from combine CSV
-  idData:      {},      // { id: [ {Date, mean_value, smooth?, Province, ...} ] }
+  idData:      {},      // { id: [ {Date, mean_value, smooth?, Province, ...} ] }  (split mode: filled on demand)
+  _split:      null,    // split-by-province loader state (null = single raw_ndvi.json)
+  _renderToken: 0,
   estimates:   {},      // { id: { P_Date_est:..., Province:... } }
   ids:         [],
   _allIds:     [],      // full unfiltered list
@@ -1178,7 +1428,11 @@ const COL_CANDIDATES = {
 };
 
 function findCol(obj, key) {
-  const keys = Object.keys(obj);
+  return findColIn(Object.keys(obj), key);
+}
+
+/** Same as findCol but straight from a list of column names. */
+function findColIn(keys, key) {
   // 1) exact match
   for (const c of COL_CANDIDATES[key]) {
     if (keys.includes(c)) return c;
@@ -1193,7 +1447,10 @@ function findCol(obj, key) {
 
 /** Returns ALL matching columns (exact + prefix) — used for multi-year est columns */
 function findAllCols(obj, key) {
-  const keys   = Object.keys(obj);
+  return findAllColsIn(Object.keys(obj), key);
+}
+
+function findAllColsIn(keys, key) {
   const seen   = new Set();
   const result = [];
   for (const c of (COL_CANDIDATES[key] || [])) {
@@ -1232,42 +1489,252 @@ function flashMsg(elId, msg, color='#1a7a1a') {
 //  API CALLS
 // ═══════════════════════════════════════════════════════════════════
 
-// Cache-bust token: changes every page load so browsers always fetch fresh JSON
-const _CB = `?v=${Date.now()}`;
+// Caching: 'no-cache' = the browser ALWAYS asks the server "has this file changed?" (Last-Modified / ETag).
+// Unchanged file → HTTP 304, nothing is downloaded again; regenerated file → the new version is downloaded.
+const FETCH_OPTS = { cache: 'no-cache' };
 
-async function apiFetch(url) {
-  const r = await fetch(url + _CB, { cache: 'no-store' });
-  if (!r.ok) throw new Error(`HTTP ${r.status}: ${url}`);
-  return r.json();
-}
+/** Folder that holds raw_index.json / raw/ / est_ndvi.json of the selected dataset, e.g. thailand/corn_crop12 */
+function dataDir() { return `${S.country.toLowerCase()}/${S.crop}`; }
 
 async function loadCountryFiles(country) {
   // Direct JSON files: raw_ndvi.json = combine data, est_ndvi.json = estimate data
   return { combine: ['raw_ndvi.json'], estimate: ['est_ndvi.json'] };
 }
 
-async function loadCsv(country, folder, filename) {
-  // Load directly from {country}/{filename} (raw_ndvi.json or est_ndvi.json)
-  const path = `${country.toLowerCase()}/${filename}`;
-  // cache: 'no-store' + timestamp query → always fetches latest file from server
-  const r = await fetch(path + _CB, { cache: 'no-store' });
-  if (!r.ok) throw new Error(`HTTP ${r.status}: ${path}`);
-  const data = await r.json();
-  // Auto-detect JSON format:
-  //   1. plain array [{col:val,...},...] — original records format
-  //   2. compact {h:[cols], d:[[vals],...]} — v2 compact format (~50% smaller)
-  //   3. legacy {records:[...], rows:N} object — old wrapper format
-  if (Array.isArray(data)) {
-    return { records: data, rows: data.length };
+// ═══════════════════════════════════════════════════════════════════
+//  PARSE PIPELINE
+//  These five functions are stringified into a Web Worker (see makeWorker) AND used directly
+//  as the main-thread fallback, so they must stay self-contained: no references to anything
+//  outside themselves.  Downloading, JSON.parse and the per-plot grouping are the heavy steps —
+//  in the worker they no longer freeze the page.
+// ═══════════════════════════════════════════════════════════════════
+
+/** Any supported date value → 'YYYY-MM-DD' (null when unparseable). Mirrors parseDate(). */
+function wFastISO(v) {
+  if (v === null || v === undefined) return null;
+  var s = typeof v === 'string' ? v : String(v);
+  if (s.length >= 10 && s.charCodeAt(4) === 45 && s.charCodeAt(7) === 45) return s.slice(0, 10);
+  s = s.trim();
+  if (!s || s.toLowerCase() === 'nan' || s === 'nopdate') return null;
+  if (/^\d{8}$/.test(s)) return s.slice(0, 4) + '-' + s.slice(4, 6) + '-' + s.slice(6, 8);
+  var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return m[3] + '-' + ('0' + m[1]).slice(-2) + '-' + ('0' + m[2]).slice(-2);   // MM/DD/YYYY, like parseDate()
+  var d = new Date(s);
+  return isNaN(d) ? null : d.toISOString().slice(0, 10);
+}
+
+/** Index of the first header matching one of `cand` (exact, then "candidate_" prefix). -1 = not found. */
+function wPickCol(h, cand) {
+  if (!cand) return -1;
+  var i, j, k;
+  for (i = 0; i < cand.length; i++) { k = h.indexOf(cand[i]); if (k >= 0) return k; }
+  for (i = 0; i < cand.length; i++) {
+    var pre = cand[i] + '_';
+    for (j = 0; j < h.length; j++) if (String(h[j]).lastIndexOf(pre, 0) === 0) return j;
   }
-  if (data.h && Array.isArray(data.d)) {
-    // compact format → convert back to records
-    const records = data.d.map(row =>
-      Object.fromEntries(data.h.map((col, i) => [col, row[i]]))
-    );
-    return { records, rows: records.length };
+  return -1;
+}
+
+/** Any of the three supported JSON layouts → { h:[column names], d:[[values],…] }. */
+function wToTable(data) {
+  if (data && Array.isArray(data.h) && Array.isArray(data.d)) return { h: data.h, d: data.d };   // compact v2
+  var recs = Array.isArray(data) ? data : (data && Array.isArray(data.records) ? data.records : null);
+  if (!recs) throw new Error('unrecognised JSON layout');
+  var h = [], seen = Object.create(null), i, j, k;
+  for (i = 0; i < recs.length; i++) {
+    k = Object.keys(recs[i]);
+    for (j = 0; j < k.length; j++) if (seen[k[j]] === undefined) { seen[k[j]] = 1; h.push(k[j]); }
   }
-  return data;
+  var d = new Array(recs.length);
+  for (i = 0; i < recs.length; i++) {
+    var r = recs[i], row = new Array(h.length);
+    for (j = 0; j < h.length; j++) row[j] = r[h[j]];
+    d[i] = row;
+  }
+  return { h: h, d: d };
+}
+
+/**
+ * Group NDVI rows by plot.  Columns, not row objects: one date dictionary + typed arrays for the
+ * whole file, so 2 million data points cost ~50 000 small objects on the main thread instead of 2 million.
+ * Returns { ids, starts, dict, dateIdx, ndvi, smooth, provs }; rows of plot g are starts[g] … starts[g+1].
+ */
+function wGroupByPlot(tab, cand) {
+  var h = tab.h, d = tab.d;
+  var iI = wPickCol(h, cand.id), iD = wPickCol(h, cand.date), iN = wPickCol(h, cand.ndvi);
+  var iP = wPickCol(h, cand.province), iS = wPickCol(h, cand.smooth);
+  if (iI < 0 || iD < 0 || iN < 0) throw new Error('column detection failed (headers: ' + h.join(', ') + ')');
+  var map = new Map(), iso = new Array(d.length), k, row, id, t, arr;
+  for (k = 0; k < d.length; k++) {
+    row = d[k];
+    if (row[iI] === null || row[iI] === undefined) continue;
+    id = String(row[iI]).trim();
+    if (!id) continue;
+    // Normalise ID: "IDKH_C1" → "KH_C1" (matches the estimate file)
+    var c0 = id.charCodeAt(0), c1 = id.charCodeAt(1);
+    if ((c0 === 73 || c0 === 105) && (c1 === 68 || c1 === 100)) id = id.replace(/^ID(?=[A-Z])/i, '');
+    t = wFastISO(row[iD]);
+    if (!t) continue;                               // skip unparseable dates
+    iso[k] = t;
+    arr = map.get(id);
+    if (!arr) map.set(id, arr = []);
+    arr.push(k);
+  }
+  var ids = [], total = 0;
+  map.forEach(function (a, key) { ids.push(key); total += a.length; });
+  var starts = new Int32Array(ids.length + 1), dateIdx = new Int32Array(total);
+  var ndvi = new Float64Array(total), smooth = new Float64Array(total);
+  var provs = new Array(ids.length), dict = [], dictMap = Object.create(null), o = 0, g, q, v;
+  var cmp = function (x, y) { return iso[x] < iso[y] ? -1 : iso[x] > iso[y] ? 1 : 0; };
+  for (g = 0; g < ids.length; g++) {
+    arr = map.get(ids[g]);
+    arr.sort(cmp);
+    starts[g] = o;
+    for (q = 0; q < arr.length; q++) {
+      k = arr[q]; row = d[k]; t = iso[k];
+      var di = dictMap[t];
+      if (di === undefined) { di = dictMap[t] = dict.length; dict.push(t); }
+      dateIdx[o] = di;
+      v = row[iN];  ndvi[o]   = (v === null || v === undefined || v === '') ? NaN : +v;
+      if (iS >= 0) { v = row[iS]; smooth[o] = (v === null || v === undefined || v === '') ? NaN : +v; }
+      else smooth[o] = NaN;
+      o++;
+    }
+    starts[g + 1] = o;
+    v = iP >= 0 ? d[arr[0]][iP] : '';
+    provs[g] = v === null || v === undefined ? '' : String(v).trim();
+  }
+  return { ids: ids, starts: starts, dict: dict, dateIdx: dateIdx, ndvi: ndvi, smooth: smooth, provs: provs };
+}
+
+/** Worker entry point: download → parse → (for NDVI files) group, reporting download progress as it goes. */
+function wMain() {
+  self.onmessage = function (ev) {
+    var m = ev.data, jid = m.id;
+    (async function () {
+      try {
+        var r = await fetch(m.url, { cache: 'no-cache' });
+        if (!r.ok) throw new Error('HTTP ' + r.status + ': ' + m.url);
+        var total = parseInt(r.headers.get('content-length') || '0', 10), text, i;
+        if (r.body && r.body.getReader) {
+          var reader = r.body.getReader(), chunks = [], got = 0, last = 0, st;
+          for (;;) {
+            st = await reader.read();
+            if (st.done) break;
+            chunks.push(st.value); got += st.value.length;
+            if (Date.now() - last > 150) { last = Date.now(); self.postMessage({ id: jid, progress: { got: got, total: total } }); }
+          }
+          var all = new Uint8Array(got), off = 0;
+          for (i = 0; i < chunks.length; i++) { all.set(chunks[i], off); off += chunks[i].length; }
+          chunks = null;
+          text = new TextDecoder('utf-8').decode(all);
+        } else { text = await r.text(); }
+        self.postMessage({ id: jid, progress: { parsing: true } });
+        var tab = wToTable(JSON.parse(text));
+        text = null;
+        if (m.kind === 'combine') {
+          var g = wGroupByPlot(tab, m.cand);
+          self.postMessage({ id: jid, ok: true, data: g },
+                           [g.starts.buffer, g.dateIdx.buffer, g.ndvi.buffer, g.smooth.buffer]);
+        } else {
+          self.postMessage({ id: jid, ok: true, data: { h: tab.h, d: tab.d } });
+        }
+      } catch (err) {
+        self.postMessage({ id: jid, ok: false, error: String((err && err.message) || err) });
+      }
+    })();
+  };
+}
+
+// ─── Worker plumbing (falls back to the main thread when workers are unavailable) ───
+let _wk = null, _wkSeq = 0;
+const _wkJobs = {};
+
+function makeWorker() {
+  if (_wk !== null) return _wk;
+  try {
+    const src = [wFastISO, wPickCol, wToTable, wGroupByPlot, wMain].map(f => f.toString()).join('\n') + '\nwMain();';
+    _wk = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+    _wk.onmessage = e => {
+      const m = e.data, job = _wkJobs[m.id];
+      if (!job) return;
+      if (m.progress) { if (job.onProgress) job.onProgress(m.progress); return; }
+      delete _wkJobs[m.id];
+      if (m.ok) job.res(m.data);
+      else job.rej(new Error(m.error));
+    };
+    _wk.onerror = () => {                      // worker died → reject everything and never use it again
+      const dead = _wk; _wk = false;
+      if (dead) try { dead.terminate(); } catch (e) {}
+      Object.keys(_wkJobs).forEach(k => { const j = _wkJobs[k]; delete _wkJobs[k]; const err = new Error('worker unavailable'); err._wkDown = true; j.rej(err); });
+    };
+  } catch (e) {
+    console.warn('[worker] not available, parsing on the main thread:', e && e.message);
+    _wk = false;
+  }
+  return _wk;
+}
+
+/** kind 'combine' → grouped plot columns; kind 'estimate' → { h, d }. */
+async function loadTable(path, kind, onProgress) {
+  const url = new URL(path, location.href).href;      // a Blob worker resolves relative URLs against blob:, so send an absolute one
+  const w = makeWorker();
+  if (w) {
+    try {
+      return await new Promise((res, rej) => {
+        const id = ++_wkSeq;
+        _wkJobs[id] = { res, rej, onProgress };
+        w.postMessage({ id, url, kind, cand: COL_CANDIDATES });
+      });
+    } catch (e) {
+      if (!e || !e._wkDown) throw e;                  // a real error (HTTP, bad columns) → report it
+    }
+  }
+  return loadTableMain(url, kind, onProgress);
+}
+
+/** Same pipeline without a worker.  Yields to the event loop while downloading so the page still responds. */
+async function loadTableMain(url, kind, onProgress) {
+  const r = await fetch(url, FETCH_OPTS);
+  if (!r.ok) throw new Error(`HTTP ${r.status}: ${url}`);
+  const total = parseInt(r.headers.get('content-length') || '0', 10);
+  let text;
+  if (r.body && r.body.getReader) {
+    const reader = r.body.getReader(), chunks = [];
+    let got = 0, last = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value); got += value.length;
+      if (performance.now() - last > 150) {
+        last = performance.now();
+        if (onProgress) onProgress({ got, total });
+        await new Promise(res => setTimeout(res));
+      }
+    }
+    const all = new Uint8Array(got);
+    let off = 0;
+    for (const c of chunks) { all.set(c, off); off += c.length; }
+    text = new TextDecoder('utf-8').decode(all);
+  } else text = await r.text();
+  if (onProgress) onProgress({ parsing: true });
+  await new Promise(res => setTimeout(res));
+  const tab = wToTable(JSON.parse(text));
+  return kind === 'combine' ? wGroupByPlot(tab, COL_CANDIDATES) : { h: tab.h, d: tab.d };
+}
+
+/** Progress callback that writes into the loading overlay — but only while the overlay is actually visible. */
+function progressTo(label) {
+  return p => {
+    if (document.getElementById('loadingOverlay').classList.contains('hidden')) return;
+    if (p.parsing) { showLoading(`Parsing ${label}…`); return; }
+    const mb = (p.got / 1048576).toFixed(1);
+    // content-length is the compressed size when the server gzips, so only show it while it still makes sense
+    const tot = p.total && p.got <= p.total ? ' / ' + (p.total / 1048576).toFixed(1) : '';
+    showLoading(`${label}… ${mb}${tot} MB`);
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1369,10 +1836,10 @@ function cropColor(cropName, cycleIdx) {
  */
 function buildCycleOverlays(id) {
   const out = { shapes: [], annotations: [], allDates: [] };
-  const est = S.estimates[id];
-  if (!est || !est.cycles || !est.cycles.length) return out;
+  const cycles = estCycles(getEstimate(id));
+  if (!cycles.length) return out;
 
-  est.cycles.forEach((cyc, idx) => {
+  cycles.forEach((cyc, idx) => {
     const pISO = toISO(parseDate(cyc.pdate));
     const hISO = toISO(parseDate(cyc.hdate));
     if (!pISO && !hISO) return;
@@ -1481,13 +1948,16 @@ async function refreshFileDropdowns() {
   return files;
 }
 
-async function loadCombineData(filename) {
+async function loadCombineData(filename, waitFor) {
   if (!filename) return;
   showLoading(`Loading ${filename}…`);
+  S._gen = (S._gen || 0) + 1;          // invalidates downloads still running for the previous country/file
   try {
-    const res = await loadCsv(S.country, 'csv_combine', filename);
-    processAllRows(res.records);
-    setStatus(`✓ ${res.rows} rows loaded`, 'ok');
+    if (await tryLoadSplitIndex(waitFor)) { hideLoading(); return; }      // v28: per-province files
+    const g = await loadTable(`${dataDir()}/${filename}`, 'combine', progressTo(filename));
+    await _beforeInit(waitFor);
+    processAllRows(g);
+    setStatus(`✓ ${g.ids.length.toLocaleString()} plots loaded`, 'ok');
   } catch(e) {
     setStatus('✗ Load failed', 'err');
     console.error(e);
@@ -1498,7 +1968,12 @@ async function loadCombineData(filename) {
 
 async function loadEstimateData(filename) {
   S.estimates = {};
+  S._geoCache = {};
+  S._estTable = null; S._estFilename = null;
+  S._cycleGroups = []; S._pdIdx = []; S._hdIdx = [];
   S._estMeta = { filename: null, idCol: null, pdCol: null, allCols: [], ids: [] };
+  const dlBtn = document.getElementById('btnDownloadEst');
+  if (dlBtn) dlBtn.disabled = true;
 
   if (!filename) {
     updateEstDebug('(none)');
@@ -1507,48 +1982,55 @@ async function loadEstimateData(filename) {
     return;
   }
   try {
-    const res = await loadCsv(S.country, 'csv_estimate', filename);
-    const records = res.records;
+    const tab = await loadTable(`${dataDir()}/${filename}`, 'estimate', progressTo(filename));
+    const h = tab.h, d = tab.d;
+    S._estTable = tab;                 // kept for the CSV download (no second copy of the raw text)
+    S._estFilename = filename;
+    if (dlBtn) dlBtn.disabled = false;
 
     dbg('dbgFile', filename, '#222');
 
-    if (!records.length) {
+    if (!d.length) {
       updateEstDebug('file empty');
       dbg('dbgCols','(file is empty)', 'red');
       return;
     }
 
-    const allCols = Object.keys(records[0]);
+    const allCols = h;
+    const col = {};                     // column name → position
+    h.forEach((c, i) => { if (col[c] === undefined) col[c] = i; });
     dbg('dbgCols', allCols.join(' | '), '#1a5fa0');
 
-    let idCol   = findCol(records[0], 'id');
-    const pdCols  = findAllCols(records[0], 'pdate_est_multi');
-    const hdCols  = findAllCols(records[0], 'hdate_est_multi');
-    const provCol = findCol(records[0], 'province');
+    let idCol     = findColIn(h, 'id');
+    const pdCols  = findAllColsIn(h, 'pdate_est_multi');
+    const hdCols  = findAllColsIn(h, 'hdate_est_multi');
+    const provCol = findColIn(h, 'province');
     let pdCol = pdCols[0] || null;   // first match — used for debug/fallback
     let hdCol = hdCols[0] || null;
 
     // Fallback: regex scan for any column with p+date / planting
-    if (!pdCol) pdCol = allCols.find(c => /p.*date|planting/i.test(c)) || null;
+    if (!pdCol) { pdCol = allCols.find(c => /p.*date|planting/i.test(c)) || null; if (pdCol) pdCols.push(pdCol); }
     // Fallback id col → first column
     if (!idCol) { idCol = allCols[0]; }
+
+    S._pdIdx = pdCols.map(c => ({ col: c, i: col[c] }));
+    S._hdIdx = hdCols.map(c => ({ col: c, i: col[c] }));
 
     dbg('dbgPdCol', pdCol ? `"${pdCol}" ✓` : `⚠ NOT FOUND in: ${allCols.join(', ')}`,
         pdCol ? '#228B22' : 'red');
 
     // Detect crop-cycle column groups: P_Date_C{n}_{yr}, H_Date_..., CropType_...
     const cycleRe = /^(P_Date|H_Date|CropType)_C(\d+)_(\d{4})$/i;
-    const cycleGroupsMap = {};   // key "C{n}_{yr}" → {cycle, year, pdate_col, hdate_col, crop_col}
-    allCols.forEach(c => {
+    const cycleGroupsMap = {};   // key "C{n}_{yr}" → {cycle, year, pi, hi, ci}
+    allCols.forEach((c, ci) => {
       const m = c.match(cycleRe);
       if (!m) return;
       const kind = m[1].toLowerCase(), cyc = parseInt(m[2]), yr = m[3];
       const k = `C${cyc}_${yr}`;
-      if (!cycleGroupsMap[k]) cycleGroupsMap[k] = { cycle:cyc, year:yr, key:k,
-                                                    pdate_col:null, hdate_col:null, crop_col:null };
-      if (kind === 'p_date')        cycleGroupsMap[k].pdate_col = c;
-      else if (kind === 'h_date')   cycleGroupsMap[k].hdate_col = c;
-      else if (kind === 'croptype') cycleGroupsMap[k].crop_col  = c;
+      if (!cycleGroupsMap[k]) cycleGroupsMap[k] = { cycle:cyc, year:yr, key:k, pi:-1, hi:-1, ci:-1 };
+      if (kind === 'p_date')        cycleGroupsMap[k].pi = ci;
+      else if (kind === 'h_date')   cycleGroupsMap[k].hi = ci;
+      else if (kind === 'croptype') cycleGroupsMap[k].ci = ci;
     });
     const cycleGroups = Object.values(cycleGroupsMap)
       .sort((a,b) => a.year.localeCompare(b.year) || a.cycle - b.cycle);
@@ -1556,28 +2038,17 @@ async function loadEstimateData(filename) {
     console.log(`[Estimate] ${cycleGroups.length} crop-cycle groups detected:`,
                 cycleGroups.map(g => g.key).join(', '));
 
-    records.forEach(r => {
-      const id = String(r[idCol] ?? '').trim();
-      if (!id || id === 'undefined') return;
-      // Build per-ID cycle data
-      const cycles = cycleGroups.map(g => ({
-        key:   g.key,
-        cycle: g.cycle,
-        year:  g.year,
-        pdate: g.pdate_col ? String(r[g.pdate_col] ?? '').trim() : '',
-        hdate: g.hdate_col ? String(r[g.hdate_col] ?? '').trim() : '',
-        crop:  g.crop_col  ? String(r[g.crop_col]  ?? '').trim() : '',
-      })).filter(c => c.pdate || c.hdate);   // skip fully-empty cycles
+    // One small record per plot; cycles and the P/H value lists are built lazily by estCycles()/estVals().
+    const iId = col[idCol], iProv = provCol !== null ? col[provCol] : undefined;
+    for (let k = 0; k < d.length; k++) {
+      const r = d[k];
+      const id = String(r[iId] ?? '').trim();
+      if (!id || id === 'undefined') continue;
       S.estimates[id] = {
-        P_Date_est: pdCol   ? String(r[pdCol] ?? '').trim() : null,  // first — backward compat
-        H_Date_est: hdCol   ? String(r[hdCol] ?? '').trim() : null,  // first — backward compat
-        P_Date_est_vals: pdCols.map(col => ({ col, val: String(r[col] ?? '').trim() })),
-        H_Date_est_vals: hdCols.map(col => ({ col, val: String(r[col] ?? '').trim() })),
-        Province:   provCol ? String(r[provCol] ?? '').trim() : '',
-        cycles,
-        _idCol: idCol, _raw: r,
+        Province: iProv !== undefined ? String(r[iProv] ?? '').trim() : '',
+        _row: r, _cols: col, _idCol: idCol,
       };
-    });
+    }
 
     const estIds = Object.keys(S.estimates);
     S._estMeta = { filename, idCol, pdCol, allCols, ids: estIds };
@@ -1585,11 +2056,11 @@ async function loadEstimateData(filename) {
     dbg('dbgIdsLoaded', `${estIds.length} est IDs  (e.g. ${estIds.slice(0,3).join(', ')})`, '#222');
     updateEstDebug(`${estIds.length} IDs | col:"${pdCol || '⚠ not found'}"`);
 
-    // Build ID map now (combine may already be loaded)
-    buildIdMap();
-
-    // Refresh current ID match display
-    if (S.ids.length) refreshDebugMatch(S.ids[S.currentIdx]);
+    // Build ID map now (combine may already be loaded).  During a country (re)load finishInit() does it once.
+    if (!S._deferMap) {
+      buildIdMap();
+      if (S.ids.length) refreshDebugMatch(S.ids[S.currentIdx]);
+    }
 
   } catch(e) {
     console.error('[Estimate] Load failed:', e);
@@ -1616,8 +2087,9 @@ function refreshDebugMatch(id) {
     dbg('dbgPVal',    `est sample IDs: ${sampleEstIds}`, '#999');
   } else {
     const sameKey = estKey === id ? '(exact)' : `via "${estKey}"`;
+    const pv = estFirst(est, 'p');
     dbg('dbgIdMatch', `✓ ${sameKey}`, '#228B22');
-    dbg('dbgPVal',    est.P_Date_est || '(cell empty)', est.P_Date_est ? 'magenta' : '#999');
+    dbg('dbgPVal',    pv || '(cell empty)', pv ? 'magenta' : '#999');
   }
 }
 
@@ -1653,27 +2125,29 @@ function idVariants(id) {
  */
 function buildIdMap() {
   S._idMap = {};
-  const combineIds = Object.keys(S.idData);
+  const combineIds = allCombineIds();
   const estIds     = Object.keys(S.estimates);
   if (!combineIds.length || !estIds.length) return;
 
-  // Pre-build variant → estimateId lookup for the estimate side
-  const estVariantMap = {};
-  estIds.forEach(eid => {
-    idVariants(eid).forEach(v => { if (!estVariantMap[v]) estVariantMap[v] = eid; });
-  });
+  // Exact matches are the norm → only build the (expensive) variant lookup if something is left unmatched
+  let estVariantMap = null;
+  const variantMap = () => {
+    if (!estVariantMap) {
+      estVariantMap = {};
+      estIds.forEach(eid => { idVariants(eid).forEach(v => { if (!estVariantMap[v]) estVariantMap[v] = eid; }); });
+    }
+    return estVariantMap;
+  };
 
   let matched = 0;
-  combineIds.forEach(cid => {
+  for (let i = 0; i < combineIds.length; i++) {
+    const cid = combineIds[i];
+    if (S.estimates[cid]) { S._idMap[cid] = cid; matched++; continue; }
+    const vm = variantMap();
     for (const v of idVariants(cid)) {
-      if (estVariantMap[v]) {
-        S._idMap[cid] = estVariantMap[v];
-        matched++;
-        return;
-      }
+      if (vm[v]) { S._idMap[cid] = vm[v]; matched++; break; }
     }
-    // No match found — cid stays unmapped
-  });
+  }
 
   const total  = combineIds.length;
   const pct    = total ? Math.round(matched / total * 100) : 0;
@@ -1692,6 +2166,46 @@ function buildIdMap() {
   if (typeof updateCountrySummary === 'function') updateCountrySummary();
 }
 
+/** Raw cell of an estimate record by column name. */
+function estGet(est, col) {
+  if (!est) return undefined;
+  const i = est._cols ? est._cols[col] : undefined;
+  return i === undefined ? est[col] : est._row[i];
+}
+
+/** Crop cycles of one plot — built on first use, then cached on the record. */
+function estCycles(est) {
+  if (!est) return [];
+  if (est._cyc) return est._cyc;
+  const r = est._row, out = [];
+  (S._cycleGroups || []).forEach(g => {
+    const c = {
+      key: g.key, cycle: g.cycle, year: g.year,
+      pdate: g.pi >= 0 ? String(r[g.pi] ?? '').trim() : '',
+      hdate: g.hi >= 0 ? String(r[g.hi] ?? '').trim() : '',
+      crop:  g.ci >= 0 ? String(r[g.ci] ?? '').trim() : '',
+    };
+    if (c.pdate || c.hdate) out.push(c);
+  });
+  return est._cyc = out;
+}
+
+/** which = 'p' | 'h' → [{ col, val }] for every matching est column (multi-year). Cached per record. */
+function estVals(est, which) {
+  if (!est) return [];
+  const k = which === 'p' ? '_pv' : '_hv';
+  if (est[k]) return est[k];
+  const idxs = (which === 'p' ? S._pdIdx : S._hdIdx) || [];
+  const r = est._row;
+  return est[k] = idxs.map(e => ({ col: e.col, val: String(r[e.i] ?? '').trim() }));
+}
+
+/** First (or only) P/H estimate value — kept for the debug panel and the saved-result fields. */
+function estFirst(est, which) {
+  const v = estVals(est, which);
+  return v.length ? v[0].val : null;
+}
+
 /** Look up estimate — IDs are already normalised (ID prefix stripped) so direct lookup works */
 function getEstimate(id) {
   if (!id) return null;
@@ -1702,53 +2216,39 @@ function getEstimate(id) {
   return null;
 }
 
-function processAllRows(records) {
-  if (!records.length) { showEmpty(); return; }
-
-  const idCol   = findCol(records[0], 'id');
-  const dateCol = findCol(records[0], 'date');
-  const ndviCol = findCol(records[0], 'ndvi');
-  const provCol = findCol(records[0], 'province');
-
-  if (!idCol || !dateCol || !ndviCol) {
-    console.warn('Could not detect required columns. Found:', Object.keys(records[0]));
-    setStatus('⚠ Column error', 'warn');
-    showEmpty();
-    return;
+/**
+ * S.idData[id] = { p, a, b, prov } — a window [a,b) into the column arrays `p` of the file the plot came from.
+ * Nothing is copied per data point; one plot's values are materialised only when its chart is drawn.
+ */
+function applyPartData(g) {
+  const part = { dict: g.dict, idx: g.dateIdx, ndvi: g.ndvi, smooth: g.smooth };
+  const ids = g.ids, starts = g.starts;
+  for (let i = 0; i < ids.length; i++) {
+    S.idData[ids[i]] = { p: part, a: starts[i], b: starts[i + 1], prov: g.provs[i] };
   }
+  return ids;
+}
 
-  S.allRows = records;
-  S.idData  = {};
+const rowCount  = r => (r ? r.b - r.a : 0);
+const rowDateAt = (r, i) => r.p.dict[r.p.idx[r.a + i]];
+const firstDate = r => rowDateAt(r, 0);
+const lastDate  = r => rowDateAt(r, r.b - r.a - 1);
+function rowDates(r) {
+  const dict = r.p.dict, idx = r.p.idx, n = r.b - r.a, out = new Array(n);
+  for (let i = 0; i < n; i++) out[i] = dict[idx[r.a + i]];
+  return out;
+}
+const rowNdvi   = r => r.p.ndvi.subarray(r.a, r.b);
+const rowSmooth = r => r.p.smooth.subarray(r.a, r.b);
 
-  records.forEach(r => {
-    const rawId = String(r[idCol] || '').trim();
-    if (!rawId) return;
-    // ── Normalise ID: strip leading "ID" prefix so "IDKH_C1" → "KH_C1"
-    //    to match the estimate CSV format
-    const id = rawId.replace(/^ID(?=[A-Z])/i, '');
-    if (!S.idData[id]) S.idData[id] = [];
-    // Normalise date to ISO
-    const rawDate = String(r[dateCol] || '').trim();
-    const dateObj = parseDate(rawDate);
-    if (!dateObj) return;  // skip unparseable dates
-    S.idData[id].push({
-      ...r,
-      _id:    id,
-      _rawId: rawId,              // keep original for reference
-      _date:  toISO(dateObj),     // normalised ISO
-      _ndvi:  r[ndviCol] != null ? parseFloat(r[ndviCol]) : null,
-      _prov:  provCol ? String(r[provCol]).trim() : '',
-    });
-  });
-
-  // Sort each ID by date
-  Object.keys(S.idData).forEach(id => {
-    S.idData[id].sort((a,b) => a._date.localeCompare(b._date));
-  });
-
+/** Everything that has to happen once the plot list (S.ids) is known. */
+function finishInit() {
   // Natural sort: KH_C1 → KH_C2 → … → KH_C10 → KH_C11 (not lexicographic)
-  S.ids = Object.keys(S.idData).sort(naturalSort);
+  S._geoCache = {};
   S._allIds = [...S.ids];
+  S._geoIds = S._allIds;           // list after province/district filter (before the ID search box)
+  S._finishedWithEst = Object.keys(S.estimates).length > 0;
+  const _sb = document.getElementById('idSearch'); if (_sb) _sb.value = '';
   S.currentIdx = 0;
   S.results = {};
 
@@ -1766,6 +2266,132 @@ function processAllRows(records) {
   if (info) info.textContent = `${S.ids.length} IDs`;
 }
 
+function processAllRows(g) {
+  if (!g.ids.length) { showEmpty(); return; }
+  S._split  = null;                 // single-file mode: everything is in memory
+  S.allRows = [];
+  S.idData  = {};
+  applyPartData(g);
+  S.ids = Object.keys(S.idData).sort(naturalSort);
+  finishInit();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SPLIT-BY-PROVINCE LOADING (v28)
+//  {country}/raw_index.json lists the files {country}/raw/<province>.json and the IDs inside each one.
+//  The plot list is built from the index alone; a province file is downloaded only when one of its plots is opened.
+// ═══════════════════════════════════════════════════════════════
+const normId = rawId => String(rawId).trim().replace(/^ID(?=[A-Z])/i, '');
+
+/** All plot IDs known to the combine data (works for both single-file and split mode). */
+function allCombineIds() {
+  return S._split ? S._split.allIds : Object.keys(S.idData);
+}
+
+/** Try to start split mode.  Returns true on success, false → caller falls back to the single raw_ndvi.json. */
+/** Wait for the estimate file (if still loading) and let the overlay repaint before the heavy synchronous init. */
+async function _beforeInit(waitFor) {
+  if (waitFor) { showLoading('Loading estimate…'); await waitFor; }
+  showLoading('Preparing plot list…');
+  await new Promise(res => requestAnimationFrame(() => setTimeout(res)));
+}
+
+async function tryLoadSplitIndex(waitFor) {
+  let index;
+  try {
+    const r = await fetch(`${dataDir()}/raw_index.json`, FETCH_OPTS);
+    if (!r.ok) return false;
+    index = await r.json();
+  } catch (e) { return false; }
+  if (!index || !Array.isArray(index.parts) || !index.parts.length || !index.parts.every(p => Array.isArray(p.id_list))) return false;
+
+  const partOfId = {};
+  index.parts.forEach(p => p.id_list.forEach(id => { partOfId[normId(id)] = p; }));
+  const allIds = Object.keys(partOfId).sort(naturalSort);
+
+  await _beforeInit(waitFor);
+  S._split  = { index, partOfId, allIds, promises: {}, loaded: [] };
+  S.allRows = [];
+  S.idData  = {};
+  S.ids     = [...allIds];
+  finishInit();
+  const mb = index.parts.reduce((a, p) => a + (p.mb || 0), 0);
+  setStatus(`✓ ${allIds.length.toLocaleString()} IDs · ${index.parts.length} files (${mb.toFixed(0)} MB total, loaded on demand)`, 'ok');
+  return true;
+}
+
+/** Download + ingest one province file (once; concurrent callers share the same promise). */
+function ensurePartLoaded(part) {
+  const sp = S._split;
+  if (!sp.promises[part.file]) {
+    const gen = S._gen;
+    sp.promises[part.file] = (async () => {
+      const g = await loadTable(`${dataDir()}/${part.file}`, 'combine', progressTo(part.key || part.file));
+      if (gen !== S._gen || S._split !== sp) return;    // country/file changed while downloading → drop the data
+      applyPartData(g);
+      sp.loaded.push(part);
+      evictOldParts(part);
+    })().catch(e => { delete sp.promises[part.file]; throw e; });     // allow a retry after a failure
+  }
+  return sp.promises[part.file];
+}
+
+/** Keep memory bounded: forget the oldest province files (they are simply re-downloaded if opened again). */
+const MAX_LOADED_PARTS = 6;
+function evictOldParts(justLoaded) {
+  const sp = S._split;
+  const curId = S.ids[S.currentIdx];
+  const curPart = curId && sp.partOfId[curId];
+  while (sp.loaded.length > MAX_LOADED_PARTS) {
+    const i = sp.loaded.findIndex(p => p !== justLoaded && p !== curPart);
+    if (i < 0) break;
+    const old = sp.loaded.splice(i, 1)[0];
+    old.id_list.forEach(rawId => {
+      const id = normId(rawId);
+      if (sp.partOfId[id] === old) delete S.idData[id];
+    });
+    delete sp.promises[old.file];
+  }
+}
+
+/** Collapse a burst of navigation into a single chart draw on the next frame. */
+let _rafId = null;
+function scheduleRenderNow() {
+  if (_rafId) cancelAnimationFrame(_rafId);
+  _rafId = requestAnimationFrame(() => { _rafId = null; renderCurrentIdNow(); });
+}
+
+/** Open plot S.ids[S.currentIdx]: draw immediately if its data is in memory, otherwise fetch its province file first. */
+function renderCurrentId() {
+  if (!S.ids.length) return;
+  const id = S.ids[S.currentIdx];
+  const token = ++S._renderToken;        // invalidates a province download still running for an earlier plot
+  syncIdList();                          // counter + highlight update right away, before the chart work
+  if (!S._split || S.idData[id]) { scheduleRenderNow(); prefetchNeighbour(); return; }
+  const part = S._split.partOfId[id];
+  if (!part) { scheduleRenderNow(); return; }
+  const spinner = setTimeout(() => showLoading(`Loading ${part.key}…`), 150);      // skip the flash for fast loads
+  ensurePartLoaded(part).then(() => {
+    clearTimeout(spinner); hideLoading();
+    if (token === S._renderToken && S.ids[S.currentIdx] === id) { renderCurrentIdNow(); prefetchNeighbour(); }
+  }).catch(e => {
+    clearTimeout(spinner); hideLoading();
+    console.error(e);
+    setStatus(`✗ Could not load ${part.file}`, 'err');
+  });
+}
+
+/** Quietly fetch the province file of the next plot (only small ones, and only when the browser is idle). */
+function prefetchNeighbour() {
+  if (!S._split) return;
+  const next = S.ids[S.currentIdx + 1];
+  const part = next && S._split.partOfId[next];
+  if (!part || S.idData[next] || (part.mb || 0) > 15) return;
+  const run = () => ensurePartLoaded(part).catch(() => {});
+  if (window.requestIdleCallback) requestIdleCallback(run, { timeout: 2000 });
+  else setTimeout(run, 300);
+}
+
 function showEmpty() {
   document.getElementById('emptyState').style.display = 'flex';
   document.getElementById('chart').style.display = 'none';
@@ -1774,29 +2400,52 @@ function showEmpty() {
 // ═══════════════════════════════════════════════════════════════════
 //  ID LIST
 // ═══════════════════════════════════════════════════════════════════
-function populateIdList() {
+function escHtml(x) {
+  return String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/** The <select> only holds a window of ID_WIN options around the current plot (50 000 <option>s make the page crawl).
+ *  ◀ ▶ still walk the whole S.ids list; the window re-centres itself when the current plot leaves it. */
+const ID_WIN = 2000;
+
+function _buildIdWindow() {
   const sel = document.getElementById('idSelect');
-  sel.innerHTML = '';
-  S.ids.forEach((id, i) => {
-    const o = document.createElement('option');
-    o.value = id;
-    o.textContent = id;
-    if (S.results[id]) o.className = 'saved';
-    sel.appendChild(o);
-  });
+  const n = S.ids.length;
+  const start = Math.max(0, Math.min(S.currentIdx - (ID_WIN >> 1), n - ID_WIN));
+  const end = Math.min(n, start + ID_WIN);
+  const parts = new Array(Math.max(0, end - start));
+  for (let i = start; i < end; i++) { const e = escHtml(S.ids[i]); parts[i - start] = `<option value="${e}">${e}</option>`; }
+  S._winStart = start;
+  S._marked = [];
+  sel.innerHTML = parts.join('');
+}
+
+function populateIdList() {
+  const idx = {};
+  for (let i = 0; i < S.ids.length; i++) idx[S.ids[i]] = i;      // id → position in S.ids
+  S._idIndex = idx;
+  _buildIdWindow();
   syncIdList();
 }
 
+/** Select the current ID and refresh the "saved" marks.  Cost is O(saved IDs), not O(all IDs). */
 function syncIdList() {
-  const sel = document.getElementById('idSelect');
-  const id  = S.ids[S.currentIdx];
-  if (id) sel.value = id;
-  document.getElementById('idCounter').textContent =
-    `${S.currentIdx + 1} / ${S.ids.length}`;
-  // Refresh saved marks
-  Array.from(sel.options).forEach(o => {
-    o.className = S.results[o.value] ? 'saved' : '';
-  });
+  const sel  = document.getElementById('idSelect');
+  let opts   = sel.options;
+  const cur  = S.currentIdx;
+  if (S.ids.length && (cur < (S._winStart || 0) || cur >= (S._winStart || 0) + opts.length)) {
+    _buildIdWindow(); opts = sel.options;
+  }
+  const w  = S._winStart || 0;
+  const ix = S._idIndex || {};
+  const o  = opts[cur - w];
+  if (S.ids.length && o && !o.selected) o.selected = true;
+  document.getElementById('idCounter').textContent = `${cur + 1} / ${S.ids.length}`;
+  const optOf = k => { const i = ix[k]; return i === undefined ? null : opts[i - w] || null; };
+  (S._marked || []).forEach(k => { if (!S.results[k]) { const x = optOf(k); if (x) x.className = ''; } });
+  const keys = Object.keys(S.results);
+  keys.forEach(k => { const x = optOf(k); if (x) x.className = 'saved'; });
+  S._marked = keys;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1810,80 +2459,140 @@ function nextId() {
 }
 function onIdListClick() {
   const sel = document.getElementById('idSelect');
-  const idx = S.ids.indexOf(sel.value);
-  if (idx >= 0) { S.currentIdx = idx; renderCurrentId(); }
+  const idx = sel.selectedIndex < 0 ? -1 : (S._winStart || 0) + sel.selectedIndex;   // window offset + position
+  if (idx >= 0 && idx < S.ids.length && idx !== S.currentIdx) { S.currentIdx = idx; renderCurrentId(); }
 }
 
-// ─── Province filter ────────────────────────────────────────────────────────
+// ─── Province / District filter ─────────────────────────────────────────────
+/** Province & district of one plot (from the estimate file; falls back to the NDVI file's province column). */
+function plotGeo(id) {
+  const cache = S._geoCache || (S._geoCache = {});
+  let g = cache[id];
+  if (!g) { g = _plotGeoCalc(id); if (g.prov) cache[id] = g; }      // computed once per plot, not once per filter rebuild
+  return g;
+}
+function _plotGeoCalc(id) {
+  const est = S.estimates[id] || S.estimates[S._idMap?.[id]];
+  return {
+    prov: String(est?.Province || estGet(est, 'Province') || S.idData[id]?.prov
+                 || (S._split?.index.split_by === 'Province' ? S._split.partOfId[id]?.key : '') || '').trim(),
+    dist: String(estGet(est, 'District')
+                 || (S._split?.index.split_by === 'District' ? S._split.partOfId[id]?.key : '') || '').trim(),
+  };
+}
+
 function populateProvFilter() {
   const sel = document.getElementById('provFilter');
   if (!sel) return;
-  // Collect unique provinces from estimates
-  const provSet = new Set();
-  S._allIds.forEach(id => {
-    const est = S.estimates[id] || S.estimates[S._idMap?.[id]];
-    const prov = est?._raw?.Province || est?.Province || '';
-    if (prov) provSet.add(prov);
-  });
-  const sorted = [...provSet].sort();
-  sel.innerHTML = `<option value="">🗂 All Provinces (${S._allIds.length})</option>`;
-  sorted.forEach(p => {
-    const count = S._allIds.filter(id => {
-      const est = S.estimates[id] || S.estimates[S._idMap?.[id]];
-      return (est?._raw?.Province || est?.Province || '') === p;
-    }).length;
+  const counts = {};
+  S._allIds.forEach(id => { const g = plotGeo(id).prov; if (g) counts[g] = (counts[g] || 0) + 1; });
+  sel.innerHTML = `<option value="">All Provinces (${S._allIds.length})</option>`;
+  Object.keys(counts).sort().forEach(p => {
     const o = document.createElement('option');
     o.value = p;
-    o.textContent = `${p}  (${count})`;
+    o.textContent = `${p}  (${counts[p]})`;
     sel.appendChild(o);
   });
+  populateDistFilter();
 }
 
-function applyProvFilter() {
-  const prov = document.getElementById('provFilter').value;
-  document.getElementById('idSearch').value = '';
+/** District list = districts of the selected province (or all districts, labelled with province, when no province is chosen). */
+function populateDistFilter(keepValue) {
+  const sel = document.getElementById('distFilter');
+  if (!sel) return;
+  const prov = document.getElementById('provFilter')?.value || '';
+  const counts = {};          // key "prov||dist" → count
+  S._allIds.forEach(id => {
+    const g = plotGeo(id);
+    if (!g.dist) return;
+    if (prov && g.prov !== prov) return;
+    const k = g.prov + '||' + g.dist;
+    counts[k] = (counts[k] || 0) + 1;
+  });
+  const keys = Object.keys(counts).sort((a, b) => {
+    const [pa, da] = a.split('||'), [pb, db] = b.split('||');
+    return prov ? da.localeCompare(db) : (pa.localeCompare(pb) || da.localeCompare(db));
+  });
+  const total = prov ? S._allIds.filter(id => plotGeo(id).prov === prov).length : S._allIds.length;
+  sel.innerHTML = `<option value="">All Districts (${total})</option>`;
+  keys.forEach(k => {
+    const [p, d] = k.split('||');
+    const o = document.createElement('option');
+    o.value = k;
+    o.textContent = prov ? `${d}  (${counts[k]})` : `${d} — ${p}  (${counts[k]})`;
+    sel.appendChild(o);
+  });
+  sel.disabled = keys.length === 0;
+  if (keepValue && counts[keepValue]) sel.value = keepValue;
+}
 
-  if (!prov) {
-    S.ids = [...S._allIds];
-  } else {
-    S.ids = S._allIds.filter(id => {
-      const est = S.estimates[id] || S.estimates[S._idMap?.[id]];
-      return (est?._raw?.Province || est?.Province || '') === prov;
-    });
+/** Province changed → rebuild the district list, then re-filter. */
+function applyProvFilter() {
+  populateDistFilter();
+  applyGeoFilter();
+}
+
+/** District changed (picking one while "All Provinces" is active also selects its province). */
+function applyDistFilter() {
+  const key = document.getElementById('distFilter').value;
+  const provSel = document.getElementById('provFilter');
+  if (key) {
+    const p = key.split('||')[0];
+    if (provSel.value !== p) { provSel.value = p; populateDistFilter(key); }
   }
+  applyGeoFilter();
+}
+
+/** Apply province + district to the plot list (then the ID search box on top of it). */
+function applyGeoFilter() {
+  const prov = document.getElementById('provFilter').value;
+  const dkey = document.getElementById('distFilter').value;
+  const dist = dkey ? dkey.split('||')[1] : '';
+  S._geoIds = (!prov && !dist) ? S._allIds : S._allIds.filter(id => {
+    const g = plotGeo(id);
+    return (!prov || g.prov === prov) && (!dist || g.dist === dist);
+  });
+  _applyIdFilterAndSearch();
+  scheduleGeoRender();
+}
+
+/** S.ids = geo-filtered IDs that also contain the search text; rebuilds the list + counters. */
+function _applyIdFilterAndSearch() {
+  const q   = document.getElementById('idSearch').value.trim().toLowerCase();
+  const geo = S._geoIds || S._allIds;
+  S.ids = q ? geo.filter(id => id.toLowerCase().includes(q)) : geo;
   S.currentIdx = 0;
   populateIdList();
-  if (S.ids.length) renderCurrentId();
+  const prov = document.getElementById('provFilter').value;
+  const dkey = document.getElementById('distFilter').value;
+  const dist = dkey ? dkey.split('||')[1] : '';
   const info = document.getElementById('idSearchInfo');
-  if (info) info.textContent = `${S.ids.length} / ${S._allIds.length} IDs`;
+  if (info) info.textContent = !S.ids.length ? '✗ no match'
+    : `${S.ids.length} / ${S._allIds.length} IDs` + (prov ? ` · ${prov}` : '') + (dist ? ` › ${dist}` : '');
+  const ctr = document.getElementById('idCounter');
+  if (ctr) ctr.textContent = S.ids.length ? `1 / ${S.ids.length}` : '0 / 0';
 }
 
-// ─── ID Search (filter + jump) ──────────────────────────────────────────────
-function onIdSearch() {
-  const q = document.getElementById('idSearch').value.trim().toLowerCase();
-  const sel = document.getElementById('idSelect');
-  const info = document.getElementById('idSearchInfo');
+/** The chart is the slow part (~300 ms). Let the dropdowns/list update first, and draw the chart once
+ *  after the user stops changing filters (e.g. Province → District in quick succession = 1 redraw). */
+let _geoRenderTimer = null;
+function scheduleGeoRender() {
+  clearTimeout(_geoRenderTimer);
+  _geoRenderTimer = setTimeout(() => {
+    _geoRenderTimer = null;
+    requestAnimationFrame(() => { if (S.ids.length) renderCurrentId(); });
+  }, 120);
+}
 
-  if (!q) {
-    // restore full list
-    Array.from(sel.options).forEach(o => o.style.display = '');
-    info.textContent = `${S.ids.length} IDs`;
-    return;
-  }
-  let shown = 0, firstMatch = null;
-  Array.from(sel.options).forEach(o => {
-    const hit = o.value.toLowerCase().includes(q);
-    o.style.display = hit ? '' : 'none';
-    if (hit) { shown++; if (!firstMatch) firstMatch = o.value; }
-  });
-  info.textContent = shown === 0 ? '✗ no match' : `${shown} match` + (shown>1?'es':'');
-  // Auto-jump to first match (single-result optimisation)
-  if (shown === 1 && firstMatch) {
-    const idx = S.ids.indexOf(firstMatch);
-    if (idx >= 0 && idx !== S.currentIdx) { S.currentIdx = idx; renderCurrentId(); }
-  } else if (shown > 0 && firstMatch) {
-    sel.value = firstMatch;
-  }
+// ─── ID Search (filters S.ids itself, so ◀ ▶ only visit the matches; debounced) ──────────
+let _searchTimer = null;
+function onIdSearch() {
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(() => {
+    _searchTimer = null;
+    _applyIdFilterAndSearch();
+    scheduleGeoRender();
+  }, 150);
 }
 
 // ─── Country summary panel ──────────────────────────────────────────────────
@@ -1902,7 +2611,7 @@ function updateCountrySummary() {
     `<span class="cs-tag">${c.key}</span>`).join('');
 
   el.innerHTML = `
-    <div class="cs-country">🌍 ${S.country}</div>
+    <div class="cs-country">🌍 ${S.country}<div class="cs-sub">${(DATASETS.find(d => d.dir === S.crop) || {}).label || S.crop}</div></div>
     <div class="cs-stats">
       <div class="cs-stat">
         <span class="cs-num">${totalIds.toLocaleString()}</span>
@@ -1932,24 +2641,27 @@ function updateCountrySummary() {
 // ═══════════════════════════════════════════════════════════════════
 //  RENDER CHART
 // ═══════════════════════════════════════════════════════════════════
-function renderCurrentId() {
+function renderCurrentIdNow() {
   if (!S.ids.length) return;
   syncIdList();
   clearMode();
 
   const id   = S.ids[S.currentIdx];
   refreshDebugMatch(id);   // ← update debug panel for this ID
-  const rows = S.idData[id] || [];
-  if (!rows.length) return;
+  const rec = S.idData[id];
+  if (!rowCount(rec)) {
+    setStatus(`⚠ ${id}: no valid NDVI rows`, 'warn');
+    try { Plotly.purge('chart'); } catch (e) {}
+    return;
+  }
 
-  const dates  = rows.map(r => r._date);
-  const ndvi   = rows.map(r => r._ndvi);
-  const prov   = rows[0]._prov || '';
+  const dates  = rowDates(rec);
+  const ndvi   = rowNdvi(rec);
+  const prov   = rec.prov || '';
 
 
   // Smooth column detection
-  const smoothCol = findCol(rows[0], 'smooth');
-  const smooth    = smoothCol ? rows.map(r => parseFloat(r[smoothCol])) : null;
+  const smooth = rowSmooth(rec);                    // NaN everywhere when the file has no smooth column
 
   // Estimate
   const est      = getEstimate(id) || null;
@@ -1964,8 +2676,8 @@ function renderCurrentId() {
   const H_EST_COLORS = ['#0077b6','#0096c7','#00b4d8','#023e8a'];
   const estCont = document.getElementById('estDatesContainer');
   if (estCont) {
-    const pVals = est?.P_Date_est_vals || (est?.P_Date_est ? [{col:'P_Date_est', val:est.P_Date_est}] : []);
-    const hVals = est?.H_Date_est_vals || (est?.H_Date_est ? [{col:'H_Date_est', val:est.H_Date_est}] : []);
+    const pVals = estVals(est, 'p');
+    const hVals = estVals(est, 'h');
     let html = '';
     if (!pVals.length && !hVals.length) {
       html = '<div class="cp-row"><span class="cp-dot" style="background:#ccc;"></span><span class="cp-lbl">P_est</span><div class="detected-val">—</div></div>';
@@ -2001,11 +2713,11 @@ function renderCurrentId() {
   updateCropDay();  // reset crop-day display when switching ID
 
   // Update chart info bar — Province / District / X / Y from estimate
-  const estRaw  = est?._raw || {};
-  const ciProv  = estRaw.Province  || est?.Province || prov || '—';
-  const ciDist  = estRaw.District  || '—';
-  const ciX     = estRaw.X != null ? Number(estRaw.X).toFixed(6) : '—';
-  const ciY     = estRaw.Y != null ? Number(estRaw.Y).toFixed(6) : '—';
+  const estX    = estGet(est, 'X'), estY = estGet(est, 'Y');
+  const ciProv  = est?.Province || estGet(est, 'Province') || prov || '—';
+  const ciDist  = estGet(est, 'District') || '—';
+  const ciX     = estX != null && estX !== '' ? Number(estX).toFixed(6) : '—';
+  const ciY     = estY != null && estY !== '' ? Number(estY).toFixed(6) : '—';
   document.getElementById('ciProvince').textContent = ciProv;
   document.getElementById('ciDistrict').textContent = ciDist;
   document.getElementById('ciX').textContent        = ciX;
@@ -2015,7 +2727,7 @@ function renderCurrentId() {
   const traces = [];
 
   // Raw NDVI — dots only, alpha 0.2, no hover popup
-  if (ndvi.some(v => v != null && !isNaN(v))) {
+  if (ndvi.some(v => !isNaN(v))) {
     traces.push({
       x: dates, y: ndvi,
       mode: 'markers',
@@ -2027,14 +2739,15 @@ function renderCurrentId() {
   }
 
   // Smooth — solid black line (NDVI adaptive)
-  if (smooth && smooth.some(v => !isNaN(v))) {
+  if (smooth.some(v => !isNaN(v))) {
     traces.push({
       x: dates, y: smooth,
       mode: 'lines',
       name: 'NDVI adaptive',
       // opacity: 0.5,
       line: { color: 'black', width: 1.5 },
-      hovertemplate: '<b>%{x|%d-%b-%Y}</b><br>NDVI adaptive: <b>%{y:.4f}</b><extra></extra>',
+      // hovertemplate: '<b>%{x|%d-%b-%Y}</b><br>NDVI adaptive: <b>%{y:.4f}</b><extra></extra>',
+      hovertemplate: 'NDVI adaptive: <b>%{y:.2f}</b><extra></extra>',
     });
   }
 
@@ -2043,11 +2756,10 @@ function renderCurrentId() {
   const cycleOverlay = buildCycleOverlays(id);   // ALL P/H cycles, color-coded by crop
 
   // Rainy season shading (Jun 1 – Oct 31) — light steel blue
-  if (dates.length) {
+  {
     // Use padded range so rainy-season covers cycle dates outside NDVI window too
-    const allYears = [...dates, ...cycleOverlay.allDates].sort();
-    const years = yearsInRange(allYears[0] || dates[0], allYears[allYears.length-1] || dates[dates.length-1]);
-    years.forEach(y => {
+    const span = [firstDate(rec), lastDate(rec), ...cycleOverlay.allDates].sort();
+    yearsInRange(span[0], span[span.length-1]).forEach(y => {
       shapes.push({
         type: 'rect', xref: 'x', yref: 'paper',
         x0: `${y}-06-01`, x1: `${y}-10-31`,
@@ -2072,14 +2784,14 @@ function renderCurrentId() {
   });
 
   // P_Date_est — magenta family, dotted (multi-year)
-  (est?.P_Date_est_vals || (est?.P_Date_est ? [{col:'P_Date_est',val:est.P_Date_est}] : []))
+  estVals(est, 'p')
     .forEach((v, i) => {
       const iso = toISO(parseDate(v.val)); if (!iso) return;
       shapes.push({ type:'line', xref:'x', yref:'paper', x0:iso, x1:iso, y0:0, y1:1,
         line:{ color:['#ff00ff','#cc00cc','#9900aa','#660088'][i%4], width:2, dash:'dot' }});
     });
   // H_Date_est — blue family, dotted (multi-year)
-  (est?.H_Date_est_vals || (est?.H_Date_est ? [{col:'H_Date_est',val:est.H_Date_est}] : []))
+  estVals(est, 'h')
     .forEach((v, i) => {
       const iso = toISO(parseDate(v.val)); if (!iso) return;
       shapes.push({ type:'line', xref:'x', yref:'paper', x0:iso, x1:iso, y0:0, y1:1,
@@ -2114,14 +2826,14 @@ function renderCurrentId() {
     bordercolor: color, borderwidth: 1, borderpad: 2,
   });
 
-  (est?.P_Date_est_vals || (est?.P_Date_est ? [{col:'P_Date_est',val:est.P_Date_est}] : []))
+  estVals(est, 'p')
     .forEach((v, i) => {
       const iso = toISO(parseDate(v.val)); if (!iso) return;
       const sfx = v.col.replace(/^P_Date_est_?/,'');
       annotations.push(labelAnnotation(iso, sfx ? `P_est ${sfx}` : 'P_est',
         ['#ff00ff','#cc00cc','#9900aa','#660088'][i%4], 0.97 - i*0.07));
     });
-  (est?.H_Date_est_vals || (est?.H_Date_est ? [{col:'H_Date_est',val:est.H_Date_est}] : []))
+  estVals(est, 'h')
     .forEach((v, i) => {
       const iso = toISO(parseDate(v.val)); if (!iso) return;
       const sfx = v.col.replace(/^H_Date_est_?/,'');
@@ -2134,6 +2846,7 @@ function renderCurrentId() {
   // ALL crop-cycle annotations
   annotations.push(...cycleOverlay.annotations);
 
+
   // 0.2 / 0.3 labels
   annotations.push({ xref:'paper', yref:'y', x:1, y:0.2,
     text:'0.2', showarrow:false, xanchor:'right',
@@ -2143,6 +2856,8 @@ function renderCurrentId() {
     font:{color:'darkred', size:10}, bgcolor:'rgba(255,255,255,0.7)' });
 
   // ── Layout ──────────────────────────────────────────────────────
+  const _rEnd = addDays(dates[dates.length - 1], 10);          // rows are sorted ascending
+  const _defaultRange = [addDays(_rEnd, -548), _rEnd];
   const layout = {
     title: {
       text: `<b>${id}</b>  —  ${prov}`,
@@ -2155,12 +2870,7 @@ function renderCurrentId() {
       dtick:      5 * 24 * 60 * 60 * 1000,   // tick every 5 days (ms)
       tickmode:   'linear',
       // Default view: last 1.5 years (548 days) up to last data point + 10 days
-      range: (() => {
-        const allDates = [...dates, ...cycleOverlay.allDates].filter(Boolean).sort();
-        const end   = addDays(allDates[allDates.length - 1], 10);
-        const start = addDays(end, -548);
-        return [start, end];
-      })(),
+      range: _defaultRange,
       gridcolor:  '#e8e8e8',
       linecolor:  '#aaa',
       tickfont:   { size: 10 },
@@ -2184,7 +2894,7 @@ function renderCurrentId() {
     plot_bgcolor:  'white',
     legend: { x: 0.01, y: 0.99, bgcolor: 'rgba(255,255,255,0.85)',
               bordercolor: '#ccc', borderwidth: 1, font: { size: 11 } },
-    hoverlabel: { font: { size: 10 } },
+    hoverlabel: { font: { size: 12 } },
     hovermode: 'x unified',
     modebar: { orientation: 'v' },
   };
@@ -2198,8 +2908,7 @@ function renderCurrentId() {
   Plotly.react('chart', traces, layout, config);
 
   // Apply date-range toolbar (initialises defaults on first render)
-  initDateRangeInputs();
-  applyDateRange();
+  initDateRangeInputs();      // From/To inputs = the same default range already set in the layout (no 2nd relayout)
 
   // ── Click handler for setting dates ─────────────────────────────
   const chartEl = document.getElementById('chart');
@@ -2225,9 +2934,8 @@ function onPDateChange(doSnap=true) {
   let val = document.getElementById('pdateInput').value;
   if (!val) { updateChartLines(); updateCropDay(); return; }
   if (doSnap) {
-    const id = S.ids[S.currentIdx];
-    const dates = (S.idData[id] || []).map(r => r._date);
-    val = snapToNearest(val, dates);
+    const rec = S.idData[S.ids[S.currentIdx]];
+    if (rec) val = snapToNearest(val, rowDates(rec));
     document.getElementById('pdateInput').value = val;
   }
   updateChartLines();
@@ -2239,9 +2947,8 @@ function onHDateChange(doSnap=true) {
   let val = document.getElementById('hdateInput').value;
   if (!val) { updateChartLines(); updateCropDay(); return; }
   if (doSnap) {
-    const id = S.ids[S.currentIdx];
-    const dates = (S.idData[id] || []).map(r => r._date);
-    val = snapToNearest(val, dates);
+    const rec = S.idData[S.ids[S.currentIdx]];
+    if (rec) val = snapToNearest(val, rowDates(rec));
     document.getElementById('hdateInput').value = val;
   }
   updateChartLines();
@@ -2274,11 +2981,10 @@ function updateCropDay() {
 function updateChartLines() {
   if (!S.ids.length) return;
   const id   = S.ids[S.currentIdx];
-  const rows = S.idData[id] || [];
-  if (!rows.length) return;
+  const rec  = S.idData[id];
+  if (!rowCount(rec)) return;
 
-  const est     = S.estimates[id] || null;
-  const dates   = rows.map(r => r._date);
+  const est  = getEstimate(id) || null;
 
   const shapes = [];
   const cycleOverlay = buildCycleOverlays(id);
@@ -2286,9 +2992,9 @@ function updateChartLines() {
 
   
   // Rainy season
-  if (dates.length) {
-    const allYears = [...dates, ...cycleOverlay.allDates].sort();
-    yearsInRange(allYears[0] || dates[0], allYears[allYears.length-1] || dates[dates.length-1]).forEach(y => {
+  {
+    const span = [firstDate(rec), lastDate(rec), ...cycleOverlay.allDates].sort();
+    yearsInRange(span[0], span[span.length-1]).forEach(y => {
       shapes.push({
         type: 'rect', xref: 'x', yref: 'paper',
         x0: `${y}-06-01`, x1: `${y}-10-31`, y0: 0, y1: 1,
@@ -2304,13 +3010,13 @@ function updateChartLines() {
     line:{color:'darkred', width:1.5, dash:'dash'},
   }));
 
-  (est?.P_Date_est_vals || (est?.P_Date_est ? [{col:'P_Date_est',val:est.P_Date_est}] : []))
+  estVals(est, 'p')
     .forEach((v,i) => {
       const iso = toISO(parseDate(v.val)); if (!iso) return;
       shapes.push({type:'line',xref:'x',yref:'paper',x0:iso,x1:iso,y0:0,y1:1,
         line:{color:['#ff00ff','#cc00cc','#9900aa','#660088'][i%4],width:2,dash:'dot'}});
     });
-  (est?.H_Date_est_vals || (est?.H_Date_est ? [{col:'H_Date_est',val:est.H_Date_est}] : []))
+  estVals(est, 'h')
     .forEach((v,i) => {
       const iso = toISO(parseDate(v.val)); if (!iso) return;
       shapes.push({type:'line',xref:'x',yref:'paper',x0:iso,x1:iso,y0:0,y1:1,
@@ -2325,7 +3031,7 @@ function updateChartLines() {
   const allCycles = [...savedCycles, ...previewCycles];
 
   const annotations = [];
-  (est?.P_Date_est_vals || (est?.P_Date_est ? [{col:'P_Date_est',val:est.P_Date_est}] : []))
+  estVals(est, 'p')
     .forEach((v,i) => {
       const iso = toISO(parseDate(v.val)); if (!iso) return;
       const sfx = v.col.replace(/^P_Date_est_?/,'');
@@ -2336,7 +3042,7 @@ function updateChartLines() {
         font:{color:clr,size:10},bgcolor:'rgba(255,255,255,0.85)',
         bordercolor:clr,borderwidth:1,borderpad:2});
     });
-  (est?.H_Date_est_vals || (est?.H_Date_est ? [{col:'H_Date_est',val:est.H_Date_est}] : []))
+  estVals(est, 'h')
     .forEach((v,i) => {
       const iso = toISO(parseDate(v.val)); if (!iso) return;
       const sfx = v.col.replace(/^H_Date_est_?/,'');
@@ -2384,13 +3090,13 @@ function updateChartLines() {
   // ALL crop-cycle annotations
   annotations.push(...cycleOverlay.annotations);
 
+  const _xs = document.getElementById('xStartDate').value || addDays(toISO(new Date()), -365);
+  const _xe = document.getElementById('xEndDate').value   || addDays(toISO(new Date()), 30);
   Plotly.relayout('chart', {
     shapes,
     annotations,
-    'xaxis.dtick':    5 * 24 * 60 * 60 * 1000,
-    'xaxis.tickmode': 'linear',
-    'xaxis.range':    [document.getElementById('xStartDate').value || addDays(toISO(new Date()),-365),
-                     document.getElementById('xEndDate').value   || addDays(toISO(new Date()), 30)],
+    ...ticksFor(_xs, _xe),
+    'xaxis.range': [_xs, _xe],
   });
 }
 
@@ -2491,15 +3197,16 @@ function addCycle() {
 
   if (!pd && !hd) { flashMsg('saveMsg', '⚠ Set at least one date', '#cc7700'); return; }
 
-  const est = getEstimate(id) || {};
+  const est = getEstimate(id);
   if (!S.results[id]) {
+    const pv = estVals(est, 'p'), hv = estVals(est, 'h');
     S.results[id] = {
       cycles:   [],
-      province: est.Province || (S.idData[id]?.[0]?._prov) || '',
-      pest:      est.P_Date_est ? toISO(parseDate(est.P_Date_est)) : null,
-      hest:      est.H_Date_est ? toISO(parseDate(est.H_Date_est)) : null,
-      pest_vals: (est.P_Date_est_vals||[]).map(v=>({col:v.col, iso:toISO(parseDate(v.val))})),
-      hest_vals: (est.H_Date_est_vals||[]).map(v=>({col:v.col, iso:toISO(parseDate(v.val))})),
+      province: plotGeo(id).prov || '',
+      pest:      pv.length ? toISO(parseDate(pv[0].val)) : null,
+      hest:      hv.length ? toISO(parseDate(hv[0].val)) : null,
+      pest_vals: pv.map(v=>({col:v.col, iso:toISO(parseDate(v.val))})),
+      hest_vals: hv.map(v=>({col:v.col, iso:toISO(parseDate(v.val))})),
     };
   }
 
@@ -2540,6 +3247,7 @@ function renderCycleList(id) {
   if (!el) return;
   const res = S.results[id];
   if (!res || !res.cycles || !res.cycles.length) { el.innerHTML = ''; return; }
+  el.dataset.id = id;
   el.innerHTML = res.cycles.map((c, i) => {
     const days = (c.pdate && c.hdate)
       ? Math.round((new Date(c.hdate) - new Date(c.pdate)) / (1000*60*60*24))
@@ -2553,8 +3261,8 @@ function renderCycleList(id) {
       <span class="cy-p">🌱 ${c.pdate ? toDisplay(c.pdate) : '—'}</span>
       <span class="cy-h">🌾 ${c.hdate ? toDisplay(c.hdate) : '—'}</span>
       ${daysTag}
-      ${c.remark ? `<span style="color:#888;font-size:10px;">${c.remark}</span>` : ''}
-      <span class="cy-del" onclick="removeCycle('${id}', ${i})">×</span>
+      ${c.remark ? `<span style="color:#888;font-size:10px;">${escHtml(c.remark)}</span>` : ''}
+      <span class="cy-del" data-i="${i}">×</span>
     </div>`;
   }).join('');
 }
@@ -2577,18 +3285,14 @@ function renderSavedList() {
   const totalCycles = ids.reduce((n, id) => n + (S.results[id].cycles?.length || 0), 0);
   sumEl.textContent = `Saved: ${ids.length} IDs · ${totalCycles} cycles`;
 
-  list.innerHTML = '';
-  ids.forEach(id => {
-    const r    = S.results[id];
-    const cycs = r.cycles || [];
-    const row  = document.createElement('div');
-    row.className = 'saved-row';
-    row.innerHTML = `
-      <span class="sr-id" title="${id}" onclick="jumpToId('${id}')" style="cursor:pointer;">${id}</span>
-      <span class="sr-p" style="font-size:10px;">${cycs.length} cycle${cycs.length!==1?'s':''}</span>
-      <span class="sr-del" onclick="deleteResult('${id}')" title="Remove all cycles">×</span>`;
-    list.appendChild(row);
-  });
+  list.innerHTML = ids.map(id => {
+    const n = S.results[id].cycles?.length || 0, e = escHtml(id);
+    return `<div class="saved-row">
+      <span class="sr-id" title="${e}" data-act="jump" data-id="${e}" style="cursor:pointer;">${e}</span>
+      <span class="sr-p" style="font-size:10px;">${n} cycle${n!==1?'s':''}</span>
+      <span class="sr-del" data-act="del" data-id="${e}" title="Remove all cycles">×</span>
+    </div>`;
+  }).join('');
 }
 
 function deleteResult(id) {
@@ -2613,6 +3317,34 @@ function fmtExport(raw) {
   if (!raw) return '';
   const iso = toISO(parseDate(raw));
   return iso || '';
+}
+
+// ── Column table → CSV text (values containing comma/quote/newline are quoted per RFC4180) ──
+function tableToCsv(h, d) {
+  const esc = v => {
+    if (v === null || v === undefined) return '';
+    const s = String(v);
+    return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const lines = [h.map(esc).join(',')];
+  for (let i = 0; i < d.length; i++) lines.push(d[i].map(esc).join(','));
+  return lines.join('\r\n');
+}
+
+// ── Download the original (unedited) est_ndvi data as CSV ─────────
+function downloadEstJson() {
+  const tab = S._estTable;
+  if (!tab || !tab.d.length) { alert('No estimate file loaded.'); return; }
+  // Prepend UTF-8 BOM so Excel opens Thai/accented text correctly.
+  const blob = new Blob(['﻿' + tableToCsv(tab.h, tab.d)], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = (S._estFilename || 'est_ndvi.json').replace(/\.json$/i, '') + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 async function exportResults() {
@@ -2648,6 +3380,8 @@ async function exportResults() {
   });
 
   try {
+    // The export API only exists behind the local Python server; on static hosting go straight to the download.
+    if (!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) throw new Error('static hosting');
     const res = await fetch('/api/export', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
@@ -2657,18 +3391,19 @@ async function exportResults() {
     if (res.ok) {
       flashMsg('exportMsg', `✓ ${data.message}`);
       // Also trigger a browser download as backup
-      downloadCsv(rows, data.filename || `NDVI_recheck_${S.country}.csv`);
+      downloadCsv(rows, data.filename || `NDVI_recheck_${S.country}_${S.crop}.csv`);
     } else {
       flashMsg('exportMsg', `✗ ${data.error}`, '#cc0000');
     }
   } catch(e) {
     // If server not available (direct file open), do browser download only
     const ts   = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
-    const fname = `NDVI_recheck_${S.country}_${ts}.csv`;
+    const fname = `NDVI_recheck_${S.country}_${S.crop}_${ts}.csv`;
     downloadCsv(rows, fname);
     flashMsg('exportMsg', `✓ Downloaded ${fname}`);
   }
 }
+
 
 function downloadCsv(rows, filename) {
   if (!rows.length) return;
@@ -2691,7 +3426,7 @@ function downloadCsv(rows, filename) {
 //  DROPDOWN CHANGE HANDLERS
 // ═══════════════════════════════════════════════════════════════════
 async function onCountryChange() {
-  S.country = document.getElementById('countrySelect').value;
+  S.crop = document.getElementById('countrySelect').value;
   S.results = {};
   renderSavedList();
   showLoading('Switching country…');
@@ -2708,12 +3443,23 @@ async function onCombineChange() {
 async function onEstimateChange() {
   S.estimateFile = document.getElementById('estimateSelect').value || null;
   await loadEstimateData(S.estimateFile);
+  hideLoading();                      // the loader shows the overlay and nobody closed it on this path
   if (S.ids.length) renderCurrentId();
 }
 
+/** Estimate + combine files download in parallel; the plot list is built once, after both are in. */
+async function loadBoth() {
+  S._deferMap = true;
+  try {
+    const estP = loadEstimateData(S.estimateFile);          // starts downloading immediately
+    await loadCombineData(S.combineFile, estP);             // waits for estP just before building the list
+    await estP;
+  } finally { S._deferMap = false; }
+  hideLoading();
+}
+
 async function reloadAll() {
-  await loadEstimateData(S.estimateFile);
-  await loadCombineData(S.combineFile);
+  await loadBoth();
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -2725,6 +3471,7 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape') e.target.blur();
     return;
   }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;      // let Ctrl+S / Ctrl+P / Ctrl+H etc. keep their browser meaning
   if (e.key === 'ArrowLeft')  { prevId(); e.preventDefault(); }
   if (e.key === 'ArrowRight') { nextId(); e.preventDefault(); }
   if (e.key === 's' || e.key === 'S') { saveCurrentId(); }
@@ -2743,8 +3490,7 @@ async function init() {
   await refreshFileDropdowns();
 
   if (S.combineFile) {
-    await loadEstimateData(S.estimateFile);
-    await loadCombineData(S.combineFile);
+    await loadBoth();
   } else {
     hideLoading();
     showEmpty();
@@ -2769,19 +3515,23 @@ function naturalSort(a, b) {
 
 /** Initialise From/To inputs to last 1.5 years (548 days) of current ID */
 function initDateRangeInputs() {
-  const id   = S.ids[S.currentIdx];
-  const rows = S.idData[id] || [];
+  const rec  = S.idData[S.ids[S.currentIdx]];
   const sEl  = document.getElementById('xStartDate');
   const eEl  = document.getElementById('xEndDate');
   if (!sEl || !eEl) return;
-  if (rows.length) {
-    const sorted = rows.map(r => r._date).sort();
-    const end   = addDays(sorted[sorted.length - 1], 10);
-    const start = addDays(end, -548);
-    sEl.value = start;
+  if (rowCount(rec)) {
+    const end = addDays(lastDate(rec), 10);
+    sEl.value = addDays(end, -548);
     eEl.value = end;
   }
   highlightActiveQuickBtn(548);
+}
+
+/** Tick spacing that follows the visible span (5-day ticks only when the window is ≤ ~1.8 yr; otherwise monthly / quarterly). */
+function ticksFor(startISO, endISO) {
+  const span = (new Date(endISO) - new Date(startISO)) / 86400000;
+  const dtick = span <= 650 ? 5 * 86400000 : span <= 1100 ? 'M1' : 'M3';
+  return { 'xaxis.dtick': dtick, 'xaxis.tickmode': 'linear' };
 }
 
 /** Apply the current From/To input values to the Plotly x-axis */
@@ -2789,7 +3539,7 @@ function applyDateRange() {
   const s = document.getElementById('xStartDate').value;
   const e = document.getElementById('xEndDate').value;
   if (s && e && s <= e) {
-    Plotly.relayout('chart', { 'xaxis.range': [s, e] });
+    Plotly.relayout('chart', { 'xaxis.range': [s, e], ...ticksFor(s, e) });
   }
   highlightActiveQuickBtn();
 }
@@ -2800,7 +3550,7 @@ function setQuickRange(days) {
   const e = addDays(toISO(new Date()),    30);
   document.getElementById('xStartDate').value = s;
   document.getElementById('xEndDate').value   = e;
-  Plotly.relayout('chart', { 'xaxis.range': [s, e] });
+  Plotly.relayout('chart', { 'xaxis.range': [s, e], ...ticksFor(s, e) });
   highlightActiveQuickBtn(days);
 }
 
@@ -2808,14 +3558,13 @@ function setQuickRange(days) {
 function setFullRange() {
   const id = S.ids[S.currentIdx];
   if (!id) return;
-  const rows = S.idData[id] || [];
-  if (!rows.length) return;
-  const allDates = rows.map(r => r._date).sort();
-  const s = addDays(allDates[0], -10);
-  const e = addDays(allDates[allDates.length - 1], 30);
+  const rec = S.idData[id];
+  if (!rowCount(rec)) return;
+  const s = addDays(firstDate(rec), -10);
+  const e = addDays(lastDate(rec), 30);
   document.getElementById('xStartDate').value = s;
   document.getElementById('xEndDate').value   = e;
-  Plotly.relayout('chart', { 'xaxis.range': [s, e] });
+  Plotly.relayout('chart', { 'xaxis.range': [s, e], ...ticksFor(s, e) });
   highlightActiveQuickBtn('all');
 }
 
@@ -2846,11 +3595,26 @@ function jumpToId(id) {
 
 window.addEventListener('load', init);
 
+// Click handlers for the dynamically built lists (event delegation instead of inline onclick)
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('cycleList')?.addEventListener('click', e => {
+    const t = e.target.closest('.cy-del');
+    if (t) removeCycle(e.currentTarget.dataset.id, parseInt(t.dataset.i, 10));
+  });
+  document.getElementById('savedList')?.addEventListener('click', e => {
+    const t = e.target.closest('[data-act]');
+    if (!t) return;
+    if (t.dataset.act === 'jump') jumpToId(t.dataset.id); else deleteResult(t.dataset.id);
+  });
+});
+
 // Resize Plotly chart whenever the browser window is resized
+let _resizeT = null;
 window.addEventListener('resize', () => {
-  if (document.getElementById('chart')?.children.length) {
-    Plotly.Plots.resize('chart');
-  }
+  clearTimeout(_resizeT);
+  _resizeT = setTimeout(() => {
+    if (document.getElementById('chart')?.children.length) Plotly.Plots.resize('chart');
+  }, 150);
 });
 </script>
 </body>
